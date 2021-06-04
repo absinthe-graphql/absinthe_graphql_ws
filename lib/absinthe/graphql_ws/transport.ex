@@ -9,14 +9,12 @@ defmodule Absinthe.GraphqlWS.Transport do
   """
 
   alias Absinthe.GraphqlWS.Socket
+  alias Absinthe.GraphqlWS.Message
   alias Phoenix.Socket.Broadcast
   require Logger
 
   @ping "ping"
   @pong "pong"
-
-  @error Jason.encode!(%{id: "4400", type: "error"})
-  @ack Jason.encode!(%{type: "connection_ack"})
 
   @doc """
   Generally this will only receive `:pong` messages in response to our keepalive
@@ -46,7 +44,7 @@ defmodule Absinthe.GraphqlWS.Transport do
 
       {:error, reason} ->
         warn("JSON parse error: #{inspect(reason)}")
-        {:reply, :error, {:text, @error}, socket}
+        {:reply, :error, {:text, Message.Error.new("4400")}, socket}
     end
   end
 
@@ -77,11 +75,11 @@ defmodule Absinthe.GraphqlWS.Transport do
 
   def handle_info(%Broadcast{event: "subscription:data", payload: payload, topic: topic}, socket) do
     subscription_id = socket.subscriptions[topic]
-    {:push, {:text, next(subscription_id, payload.result)}, socket}
+    {:push, {:text, Message.Next.new(subscription_id, payload.result)}, socket}
   end
 
   def handle_info({:complete, id}, socket) do
-    {:push, {:text, complete(id)}, socket}
+    {:push, {:text, Message.Complete.new(id)}, socket}
   end
 
   def handle_info(message, socket) do
@@ -109,7 +107,7 @@ defmodule Absinthe.GraphqlWS.Transport do
   """
   @spec handle_message(map(), Socket.t()) :: Socket.reply()
   def handle_message(%{"type" => "connection_init"}, socket) do
-    {:reply, :ok, {:text, @ack}, socket}
+    {:reply, :ok, {:text, Message.ConnectionAck.new()}, socket}
   end
 
   def handle_message(%{"id" => id, "type" => "subscribe", "payload" => payload}, socket) do
@@ -197,16 +195,16 @@ defmodule Absinthe.GraphqlWS.Transport do
         {:ok, %{socket | subscriptions: Map.put(socket.subscriptions, topic, id)}}
 
       {:ok, %{data: _} = reply, context} ->
-        queue_complete(id)
+        queue_complete_message(id)
         socket = merge_opts(socket, context: context)
-        {:reply, :ok, {:text, next(id, reply)}, socket}
+        {:reply, :ok, {:text, Message.Next.new(id, reply)}, socket}
 
       {:ok, %{errors: _} = reply, context} ->
         socket = merge_opts(socket, context: context)
-        {:reply, :ok, {:text, error(id, reply)}, socket}
+        {:reply, :ok, {:text, Message.Error.new(id, reply)}, socket}
 
       {:error, reply} ->
-        {:reply, :error, {:text, reply}, socket}
+        {:reply, :error, {:text, Message.Error.new(id, reply)}, socket}
     end
   end
 
@@ -226,10 +224,7 @@ defmodule Absinthe.GraphqlWS.Transport do
     %{socket | absinthe: %{socket.absinthe | opts: opts}}
   end
 
-  defp complete(id), do: Jason.encode!(%{id: id, type: "complete"})
-  defp error(id, payload), do: Jason.encode!(%{id: id, type: "error", payload: payload})
-  defp next(id, payload), do: Jason.encode!(%{id: id, type: "next", payload: payload})
-  defp queue_complete(id), do: send(self(), {:complete, id})
+  defp queue_complete_message(id), do: send(self(), {:complete, id})
 
   defp debug(msg), do: Logger.debug("[graph-socket@#{inspect(self())}] #{msg}")
   defp warn(msg), do: Logger.warn("[graph-socket@#{inspect(self())}] #{msg}")
