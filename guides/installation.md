@@ -47,8 +47,8 @@ defmodule MyAppWeb.GraphqlWSSocket do
     {:ok, assign(socket, :message, id)}
   end
 
-  def handle_message({:internal_thing, id}, socket) do
-    {:ok, assign(socket, :message, id)}
+  def handle_message({:external_thing, _id}, socket) do
+    {:push, {:text, "{}"}, socket}
   end
 end
 ```
