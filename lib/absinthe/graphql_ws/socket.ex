@@ -1,28 +1,31 @@
 defmodule Absinthe.GraphqlWS.Socket do
   @moduledoc """
-  GraphQL over WebSocket protocol:
-  https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md
+  This module is used by a custom websocket, which can then handle connections from a client
+  implementing the [GraphQL over WebSocket protocol](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md)
 
-  Notes on WebSockets and `Phoenix.Socket.Transport`:
-  * Data comes in and goes out in frames. These frames have an `opcode`.
-  * When `opcode` is `:text` or `:binary`, the message is routed to the `handle_in` callback.
-  * When `opcode` is `:ping` or `:pong`, the message is routed to the `handle_control` callback.
+  ## Options
 
-  https://github.com/theturtle32/WebSocket-Node/blob/a2cd3065167668a9685db0d5f9c4083e8a1839f0/docs/WebSocketFrame.md
+  * `schema` - required - The Absinthe schema for the current application (example: `MyAppWeb.Schema`)
+  * `keepalive` - optional - Interval in milliseconds to send `:ping` control frames over the websocket.
+    Defaults to `30_000` (30 seconds).
+  * `pipeline` - optional - A `{module, function}` tuple defining how to generate an Absinthe pipeline
+    for each incoming message. Defaults to `{Absinthe.GraphqlWS.Socket, :absinthe_pipeline}`.
+
+  ## Example
+
+      defmodule MyAppWeb.GraphqlSocket do
+        use Absinthe.GraphqlWS.Socket, schema: MyAppWeb.Schema
+
+        def handle_message(_msg, socket) do
+          {:ok, socket}
+        end
+      end
   """
 
   alias Absinthe.GraphqlWS.Socket
 
   @default_keepalive 30_000
 
-  @typedoc """
-  Options that must be passed in:
-
-  * `schema` - required - The Absinthe schema for the current application (example: `MyAppWeb.Schema`)
-  * `keepalive` - optional - Interval in milliseconds to send `:ping` control frames over the websocket.
-  * `pipeline` - optional - A `{module, function}` tuple defining how to generate an Absinthe pipeline for each incoming message.
-    Defaults to `{Absinthe.GraphqlWS.Socket, :absinthe_pipeline}`.
-  """
   @enforce_keys ~w[absinthe connect_info endpoint handler keepalive pubsub]a
   defstruct [
     :absinthe,
@@ -35,6 +38,9 @@ defmodule Absinthe.GraphqlWS.Socket do
     subscriptions: %{}
   ]
 
+  @typedoc """
+  A socket that holds information necessary for parsing incoming messages as well as outgoing subscription data.
+  """
   @type t() :: %Socket{
           absinthe: map(),
           assigns: map(),
@@ -44,21 +50,33 @@ defmodule Absinthe.GraphqlWS.Socket do
           subscriptions: map()
         }
 
+  @typedoc """
+  Opcode atoms for messages handled by `handle_control/2`. Used by server-side keepalive messages.
+  """
   @type control() ::
           :ping
           | :pong
 
+  @typedoc """
+  Opcode atoms for messages returned by `handle_in/2`.
+  """
   @type opcode() ::
           :text
           | :binary
           | control()
 
+  @typedoc """
+  Valid replies from `Absinthe.GraphqlWS.Transport.handle_in/2`
+  """
   @type reply() ::
           {:ok, t()}
           | {:reply, :ok, {opcode(), term()}, t()}
           | {:reply, :error, {opcode(), term()}, t()}
           | {:stop, term(), t()}
 
+  @typedoc """
+  Valid replies from `c:handle_message/2`
+  """
   @type response() ::
           {:ok, t()}
           | {:push, {opcode(), term()}, t()}
@@ -67,6 +85,17 @@ defmodule Absinthe.GraphqlWS.Socket do
   @doc """
   Handles messages that are sent to this process through `send/2`, which have not been caught
   by the default implementation.
+
+
+  ## Example
+
+      def handle_message({:thing, thing}, socket) do
+        {:ok, assign(socket, :thing, thing)}
+      end
+
+      def handle_message(_msg, socket) do
+        {:ok, socket}
+      end
   """
   @callback handle_message(params :: map(), t()) :: Socket.response()
 

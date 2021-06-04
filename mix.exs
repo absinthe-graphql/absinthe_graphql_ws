@@ -52,8 +52,25 @@ defmodule AbsintheGraphqlWS.MixProject do
         "guides/installation.md",
         "README.md"
       ],
+      groups_for_modules: docs_module_groups(),
       main: "overview",
       source_ref: "v#{@version}"
+    ]
+  end
+
+  defp docs_module_groups do
+    [
+      Socket: [
+        Absinthe.GraphqlWS.Socket,
+        Absinthe.GraphqlWS.Transport,
+        Absinthe.GraphqlWS.Util
+      ],
+      Messages: [
+        Absinthe.GraphqlWS.Message.ConnectionAck,
+        Absinthe.GraphqlWS.Message.Complete,
+        Absinthe.GraphqlWS.Message.Error,
+        Absinthe.GraphqlWS.Message.Next
+      ]
     ]
   end
 
