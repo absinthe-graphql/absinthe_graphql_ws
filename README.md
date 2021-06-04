@@ -1,21 +1,21 @@
-# AbsintheGraphqlWs
+# AbsintheGraphqlWS
 
-**TODO: Add description**
+Adds a websocket transport for the
+[GraphQL over WebSocket Protocol](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md)
+to Absinthe running in Phoenix.
+
+## References
+
+* https://github.com/enisdenjo/graphql-ws
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `absinthe_graphql_ws` to your list of dependencies in `mix.exs`:
+Add `absinthe_graphql_ws` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:absinthe_graphql_ws, "~> 0.1.0"}
+    {:absinthe_graphql_ws, github: "geometerio/absinteh_graphql_ws"}
   ]
 end
 ```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/absinthe_graphql_ws](https://hexdocs.pm/absinthe_graphql_ws).
-

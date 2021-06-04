@@ -1,8 +1,4 @@
-defmodule AbsintheGraphqlWsTest do
+defmodule AbsintheGraphqlWSTest do
   use ExUnit.Case
-  doctest AbsintheGraphqlWs
-
-  test "greets the world" do
-    assert AbsintheGraphqlWs.hello() == :world
-  end
+  doctest AbsintheGraphqlWS
 end

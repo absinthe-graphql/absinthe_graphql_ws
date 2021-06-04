@@ -1,18 +1,5 @@
-defmodule AbsintheGraphqlWs do
+defmodule AbsintheGraphqlWS do
   @moduledoc """
-  Documentation for `AbsintheGraphqlWs`.
+  Documentation for `AbsintheGraphqlWS`.
   """
-
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> AbsintheGraphqlWs.hello()
-      :world
-
-  """
-  def hello do
-    :world
-  end
 end
