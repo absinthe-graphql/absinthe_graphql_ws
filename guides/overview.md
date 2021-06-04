@@ -9,4 +9,4 @@ The [GraphQL over WebSocket Protocol](https://github.com/enisdenjo/graphql-ws/bl
 is an attempt to define a generic transport protocol with few or no dependencies that is simple to
 implement.
 
-This library implements a socket that can be 
+This library implements a socket that can be `use`'d by a module and added to a Phoenix endpoint.

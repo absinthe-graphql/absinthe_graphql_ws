@@ -49,6 +49,7 @@ defmodule AbsintheGraphqlWS.MixProject do
     [
       extras: [
         "guides/overview.md",
+        "guides/installation.md",
         "README.md"
       ],
       main: "overview",

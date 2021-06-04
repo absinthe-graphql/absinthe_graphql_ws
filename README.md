@@ -7,6 +7,7 @@ to Absinthe running in Phoenix.
 ## References
 
 * https://github.com/enisdenjo/graphql-ws
+* This project is heavily inspired by [subscriptions-transport-ws](https://github.com/maartenvanvliet/subscriptions-transport-ws)
 
 ## Installation
 
