@@ -44,24 +44,25 @@ runs:
       shell: bash
       run: |
         name=${{ inputs.name }}
+        organization=${{ inputs.organization }}
 
-        if [[ -n "${{ inputs.organization }}" ]]; then
-          search=$(mix hex.search "${name}" --organization "${{ inputs.organization }}")
-          released_version=$(echo "${search}" | grep -E "${{inputs.organization}} +${name} " | awk 'BEGIN {FS="  [ ]+"}{print $3}')
+        if [[ -n "${organization}" ]]; then
+          search=$(mix hex.search "${name}" --organization "${organization}")
+          remote_version=$(echo "${search}" | grep -E "${.organization} +${name} " | awk 'BEGIN {FS="  [ ]+"}{print $3}')
         else
-          search=$(mix hex.search "${name}" | perl -pe 's/\x1b\[[^m]+m//g;')
+          search=$(mix hex.search "${name}" | sed 's/\x1b\[[^m]+m//g;')
 
-          if [[ $(echo $search | grep -q "^Organization") ]]; then
-            released_version=$(echo "${search}" | grep -E "\\w+ +${name} " | awk 'BEGIN {FS="  [ ]+"}{print $4}')
+          if echo $search | head -n 1 | grep -q "^Organization"; then
+            remote_version=$(echo "${search}" | grep -E "\\w+ +${name} " | awk 'BEGIN {FS="  [ ]+"}{print $4}')
           else
-            released_version=$(echo "${search}" | grep -E "^${name} " | awk 'BEGIN {FS="  [ ]+"}{print $3}')
+            remote_version=$(echo "${search}" | grep -E "^${name} " | awk 'BEGIN {FS="  [ ]+"}{print $3}')
           fi
         fi
 
         echo "::group::Remote version"
-        echo "${version}"
+        echo "${remote_version}"
         echo "::endgroup::"
-        echo "::set-output name=VERSION::$(echo $released_version)"
+        echo "::set-output name=VERSION::$(echo $remote_version)"
 
     - name: Verify versions
       shell: bash
