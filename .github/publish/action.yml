@@ -67,17 +67,19 @@ runs:
     - name: Verify versions
       shell: bash
       run: |
+        SEMVER_REGEX="^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(\\-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"
+
         echo "::group::Versions"
 
         local_version=${{ steps.local-version.outputs.VERSION }}
         remote_version=${{ steps.remote-version.outputs.VERSION }}
 
-        if [[ ! "${local_version}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
+        if [[ ! "${local_version}" =~ $SEMVER_REGEX ]]; then
           echo "::error::Unable to find local version ${local_version}"
           exit 1
         fi
 
-        if [[ ! "${remote_version}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
+        if [[ ! "${remote_version}" =~ $SEMVER_REGEX ]]; then
           echo "::error::Unable to find remote version ${remote_version}"
           exit 1
         fi
