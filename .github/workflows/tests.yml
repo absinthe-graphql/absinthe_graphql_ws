@@ -124,5 +124,4 @@ jobs:
         uses: ./.github/publish
         with:
           name: absinthe_graphql_ws
-          organization: geometer
           key: ${{ secrets.HEX_PM_KEY }}

@@ -19,6 +19,11 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Authenticate
+      shell: bash
+      run: |
+        mix hex.config api_key ${{ inputs.key }}
+
     - name: Find local version
       id: local-version
       shell: bash
