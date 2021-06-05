@@ -108,10 +108,10 @@ jobs:
         working-directory: .
   publish:
     name: Publish to Hex
-    # if: github.ref == 'refs/heads/main'
-    # needs:
-    #   - test
-    #   - linter
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - test
+      - linter
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
