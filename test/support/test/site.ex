@@ -49,7 +49,7 @@ defmodule Test.Site do
 
   defmodule TestPubSub do
     @moduledoc false
-    def start_link(), do: Registry.start_link(keys: :duplicate, name: __MODULE__)
+    def start_link, do: Registry.start_link(keys: :duplicate, name: __MODULE__)
 
     def subscribe(subscriber_key), do: Registry.register(__MODULE__, subscriber_key, nil)
 

@@ -8,8 +8,8 @@ defmodule Absinthe.GraphqlWS.Transport do
   module will be passed through to `c:Absinthe.GraphqlWS.Socket.handle_message/2`.
   """
 
-  alias Absinthe.GraphqlWS.Socket
   alias Absinthe.GraphqlWS.Message
+  alias Absinthe.GraphqlWS.Socket
   alias Phoenix.Socket.Broadcast
   require Logger
 

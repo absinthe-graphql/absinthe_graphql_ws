@@ -1,0 +1,105 @@
+name: AbsintheGraphqlWS
+on:
+  push:
+    branches:
+      - main
+      - ci
+      - ci-*
+  pull_request:
+    branches:
+      - main
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    env:
+      MIX_ENV: test
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.12.1"
+          otp-version: "24.0.2"
+      - name: Cache deps
+        uses: actions/cache@v2
+        with:
+          path: deps
+          key: ${{ runner.os }}-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Cache _build
+        uses: actions/cache@v2
+        with:
+          path: _build
+          key: ${{ runner.os }}-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Install dependencies
+        run: mix deps.get
+        working-directory: .
+      - name: Compile for test
+        run: mix compile
+        working-directory: .
+  test:
+    name: Test
+    needs: build
+    runs-on: ubuntu-20.04
+    env:
+      MIX_ENV: test
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.12.1"
+          otp-version: "24.0.2"
+      - name: Cache deps
+        uses: actions/cache@v2
+        with:
+          path: deps
+          key: ${{ runner.os }}-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Cache _build
+        uses: actions/cache@v2
+        with:
+          path: _build
+          key: ${{ runner.os }}-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Run tests
+        run: mix test --color --cover
+        working-directory: .
+      - name: Run mix audit
+        run: mix deps.audit
+        working-directory: .
+      - name: Warnings as errors
+        run: mix compile --force --warnings-as-errors
+        working-directory: .
+  linter:
+    name: Credo + Dialyxir
+    needs: build
+    runs-on: ubuntu-20.04
+    env:
+      MIX_ENV: test
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.12.1"
+          otp-version: "24.0.2"
+      - name: Cache deps
+        uses: actions/cache@v2
+        with:
+          path: deps
+          key: ${{ runner.os }}-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Cache _build
+        uses: actions/cache@v2
+        with:
+          path: _build
+          key: ${{ runner.os }}-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Cache PLTs
+        uses: actions/cache@v2
+        with:
+          path: priv/plts
+          key: ${{ runner.os }}-dialyxir-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Credo
+        run: mix credo --strict
+        working-directory: .
+      - name: Run dialyzer
+        run: mix dialyzer
+        working-directory: .
