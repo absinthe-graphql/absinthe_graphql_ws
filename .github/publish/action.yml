@@ -12,10 +12,10 @@ inputs:
 outputs:
   local-version:
     description: "Version from project"
-    value: ${{ steps.local-version.outputs.version }}
+    value: ${{ steps.local-version.outputs.VERSION }}
   remote-version:
     description: "Version published to hex"
-    value: ${{ steps.remote-version.outputs.version }}
+    value: ${{ steps.remote-version.outputs.VERSION }}
 runs:
   using: "composite"
   steps:
@@ -26,25 +26,42 @@ runs:
         name=${{ inputs.name }}
         version=$(grep "@version \"" mix.exs | cut -d "\"" -f 2)
 
-        echo ""
-        echo "::set-output name=version::$(echo $version)"
+        echo "::group::Local version"
+        echo "${version}"
+        echo "::endgroup::"
+        echo "::set-output name=VERSION::$(echo $version)"
 
     - name: Find remote version
       id: remote-version
       shell: bash
       run: |
         name=${{ inputs.name }}
-        released_version=$(mix hex.search "${name}" | grep "^${name} " | awk 'BEGIN {FS="  [ ]+"}{print $3}')
 
-        echo "::set-output name=version::$(echo $released_version)"
+        if [[ -n "${{ inputs.organization }}" ]]; then
+          search=$(mix hex.search "${name}" --organization "${{ inputs.organization }}")
+          released_version=$(echo "${search}" | grep -E "${{inputs.organization}} +${name} " | awk 'BEGIN {FS="  [ ]+"}{print $3}')
+        else
+          search=$(mix hex.search "${name}" | perl -pe 's/\x1b\[[^m]+m//g;')
+
+          if [[ $(echo $search | grep -q "^Organization") ]]; then
+            released_version=$(echo "${search}" | grep -E "\\w+ +${name} " | awk 'BEGIN {FS="  [ ]+"}{print $4}')
+          else
+            released_version=$(echo "${search}" | grep -E "^${name} " | awk 'BEGIN {FS="  [ ]+"}{print $3}')
+          fi
+        fi
+
+        echo "::group::Remote version"
+        echo "${version}"
+        echo "::endgroup::"
+        echo "::set-output name=VERSION::$(echo $released_version)"
 
     - name: Verify versions
       shell: bash
       run: |
         echo "::group::Versions"
 
-        local_version=${{ steps.local-version.outputs.version }}
-        remote_version=${{ steps.remote-version.outputs.version }}
+        local_version=${{ steps.local-version.outputs.VERSION }}
+        remote_version=${{ steps.remote-version.outputs.VERSION }}
 
         if [[ ! "${local_version}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
           echo "::error::Unable to find local version"
