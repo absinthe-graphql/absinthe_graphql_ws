@@ -111,6 +111,12 @@ jobs:
       - linter
     runs-on: ubuntu-20.04
     steps:
+      - uses: actions/checkout@v2
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.12.1"
+          otp-version: "24.0.2"
       - name: Publish
         uses: ./.github/publish
         with:
