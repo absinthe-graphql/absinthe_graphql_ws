@@ -9,25 +9,50 @@ inputs:
   name:
     description: "Name of package"
     required: true
+outputs:
+  local-version:
+    description: "Version from project"
+    value: ${{ steps.local-version.outputs.version}}
+  remote-version:
+    description: "Version published to hex"
+    value: ${{ steps.remote-version.outputs.version}}
 runs:
   using: "composite"
   steps:
-    - name: Find version
+    - name: Find local version
+      id: local-version
       shell: bash
       run: |
         name=${{ inputs.name }}
         version=$(grep "@version \"" mix.exs | cut -d "\"" -f 2)
+
+        echo ""
+        echo "::set-output name=version::$(echo $version)"
+
+    - name: Find remote version
+      id: remote-version
+      shell: bash
+      run: |
+        name=${{ inputs.name }}
         released_version=$(mix hex.search "${name}" | grep "^${name} " | awk 'BEGIN {FS="  [ ]+"}{print $3}')
 
-        if [[ ! "${version}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
-          echo "Unable to find project version" >&2
+        echo "::set-output name=version::$(echo $released_version)"
+
+    - name: Verify versions
+      shell: bash
+      run: |
+        echo "::group::Versions"
+
+        if [[ ! "${{ outputs.local-version }}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
+          echo "::error::Unable to find local version"
           exit 1
         fi
 
-        if [[ ! "${released_version}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
-          echo "Unable to find released version" >&2
+        if [[ ! "${{ outputs.remote-version }}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
+          echo "::error::Unable to find remote version"
           exit 1
         fi
 
         echo "Project version: ${version}"
         echo "Released version: ${released_version}"
+        echo "::endgroup::"
