@@ -22,6 +22,9 @@ runs:
     - name: Authenticate
       shell: bash
       run: |
+        echo "::group::Auth"
+        echo "Authenticating"
+        echo "::endgroup::"
         mix hex.config api_key ${{ inputs.key }}
 
     - name: Find local version
