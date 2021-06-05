@@ -103,3 +103,17 @@ jobs:
       - name: Run dialyzer
         run: mix dialyzer
         working-directory: .
+  publish:
+    name: Publish to Hex
+    if: github.ref == 'refs/heads/main'
+    needs:
+      - test
+      - linter
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Publish
+        uses: ./.github/publish
+        with:
+          name: absinthe_graphql_ws
+          organization: geometer
+          key: ${{ secrets.HEX_PM_KEY }}

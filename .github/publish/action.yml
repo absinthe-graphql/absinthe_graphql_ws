@@ -1,0 +1,33 @@
+name: "Publish to Hex"
+inputs:
+  key:
+    description: "Write key"
+    required: true
+  organization:
+    description: "Optional organization to deploy package into"
+    required: false
+  name:
+    description: "Name of package"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Find version
+      shell: bash
+      run: |
+        name=${{ inputs.name }}
+        version=$(grep "@version \"" mix.exs | cut -d "\"" -f 2)
+        released_version=$(mix hex.search "${name}" | grep "^${name} " | awk 'BEGIN {FS="  [ ]+"}{print $3}')
+
+        if [[ ! "${version}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
+          echo "Unable to find project version" >&2
+          exit 1
+        fi
+
+        if [[ ! "${released_version}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
+          echo "Unable to find released version" >&2
+          exit 1
+        fi
+
+        echo "Project version: ${version}"
+        echo "Released version: ${released_version}"
