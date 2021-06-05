@@ -33,7 +33,7 @@ defmodule AbsintheGraphqlWS.MixProject do
       {:absinthe_phoenix, "> 0.0.0"},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:cowlib, "~> 2.8", only: :test, override: true},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.24", only: :dev, runtime: false},
       {:gun, "~> 1.3", only: [:test]},
       {:jason, "~> 1.2"},
