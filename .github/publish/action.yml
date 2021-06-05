@@ -12,10 +12,10 @@ inputs:
 outputs:
   local-version:
     description: "Version from project"
-    value: ${{ steps.local-version.outputs.version}}
+    value: ${{ steps.local-version.outputs.version }}
   remote-version:
     description: "Version published to hex"
-    value: ${{ steps.remote-version.outputs.version}}
+    value: ${{ steps.remote-version.outputs.version }}
 runs:
   using: "composite"
   steps:
@@ -43,16 +43,19 @@ runs:
       run: |
         echo "::group::Versions"
 
-        if [[ ! "${{ outputs.local-version }}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
+        local_version=${{ steps.local-version.outputs.version }}
+        remote_version=${{ steps.remote-version.outputs.version }}
+
+        if [[ ! "${local_version}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
           echo "::error::Unable to find local version"
           exit 1
         fi
 
-        if [[ ! "${{ outputs.remote-version }}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
+        if [[ ! "${remote_version}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
           echo "::error::Unable to find remote version"
           exit 1
         fi
 
-        echo "Project version: ${version}"
-        echo "Released version: ${released_version}"
+        echo "Project version: ${local_version}"
+        echo "Released version: ${remote_version}"
         echo "::endgroup::"
