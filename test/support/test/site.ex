@@ -26,9 +26,9 @@ defmodule Test.Site do
     end
 
     defp pubsub_name,
-    do:
-      Application.get_env(:absinthe_graphql_ws, Test.Site.Endpoint)
-      |> Keyword.fetch!(:pubsub_server)
+      do:
+        Application.get_env(:absinthe_graphql_ws, Test.Site.Endpoint)
+        |> Keyword.fetch!(:pubsub_server)
   end
 
   defmodule Web do
