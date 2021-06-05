@@ -10,6 +10,7 @@ defmodule AbsintheGraphqlWS.MixProject do
       dialyzer: dialyzer(),
       docs: docs(),
       elixir: "~> 1.12",
+      elixirc_paths: elixirc_paths(Mix.env()),
       homepage_url: "https://github.com/geometerio/absinthe_graphql_ws",
       name: "AbsintehGrahqlWS",
       package: package(),
@@ -29,11 +30,15 @@ defmodule AbsintheGraphqlWS.MixProject do
   defp deps do
     [
       {:absinthe, "~> 1.6"},
+      {:absinthe_phoenix, "> 0.0.0"},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:cowlib, "~> 2.8", only: :test, override: true},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.24", only: :dev, runtime: false},
+      {:gun, "~> 1.3", only: [:test]},
       {:jason, "~> 1.2"},
-      {:phoenix, "~> 1.5"}
+      {:phoenix, "~> 1.5"},
+      {:plug_cowboy, "~> 2.5", only: :test, override: true}
     ]
   end
 
@@ -73,6 +78,9 @@ defmodule AbsintheGraphqlWS.MixProject do
       ]
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp package do
     [
