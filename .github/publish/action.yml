@@ -87,3 +87,26 @@ runs:
         echo "Project version: ${local_version}"
         echo "Released version: ${remote_version}"
         echo "::endgroup::"
+
+    - name: Publish
+      shell: bash
+      run: |
+        local_version=${{ steps.local-version.outputs.VERSION }}
+        remote_version=${{ steps.remote-version.outputs.VERSION }}
+        organization=${{ inputs.organization }}
+
+        echo "::group::Publish"
+
+        if [[ "${local_version}" == "${remote_version}" ]]; then
+          echo "Version has already been published"
+          echo "Doing nothing"
+          exit 0
+        fi
+
+        if [[ -n "$organization" ]]; then
+          mix hex.publish --organization "$organization" --yes
+        else
+          mix hex.publish --yes
+        fi
+
+        echo "::endgroup::"
