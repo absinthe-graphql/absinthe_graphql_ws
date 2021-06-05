@@ -14,7 +14,7 @@ defmodule AbsintheGraphqlWS.MixProject do
       homepage_url: "https://github.com/geometerio/absinthe_graphql_ws",
       name: "AbsintehGrahqlWS",
       package: package(),
-      preferred_cli_env: [credo: :test],
+      preferred_cli_env: [credo: :test, dialyzer: :test],
       source_url: "https://github.com/geometerio/absinthe_graphql_ws",
       start_permanent: Mix.env() == :prod,
       version: @version
@@ -45,7 +45,7 @@ defmodule AbsintheGraphqlWS.MixProject do
 
   defp dialyzer do
     [
-      plt_add_apps: [:mix],
+      plt_add_apps: [:ex_unit, :mix],
       plt_add_deps: :app_tree,
       plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
     ]

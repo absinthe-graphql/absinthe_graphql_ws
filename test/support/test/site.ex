@@ -65,6 +65,8 @@ defmodule Test.Site do
     @moduledoc false
     use Web, :router
 
+    @dialyzer {:nowarn_function, {:call, 2}}
+
     pipeline :browser do
       plug(:accepts, ["html"])
       plug(:fetch_session)
