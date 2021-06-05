@@ -73,12 +73,12 @@ runs:
         remote_version=${{ steps.remote-version.outputs.VERSION }}
 
         if [[ ! "${local_version}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
-          echo "::error::Unable to find local version"
+          echo "::error::Unable to find local version ${local_version}"
           exit 1
         fi
 
         if [[ ! "${remote_version}" =~ "^[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+\$" ]]; then
-          echo "::error::Unable to find remote version"
+          echo "::error::Unable to find remote version ${remote_version}"
           exit 1
         fi
 
