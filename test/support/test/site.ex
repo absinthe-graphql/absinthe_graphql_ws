@@ -6,6 +6,55 @@ defmodule Test.Site do
   def host, do: @host
   def port, do: @port
 
+  defmodule Resolvers do
+    @thing_one %{id: 1, name: "one"}
+    @thing_two %{id: 2, name: "two"}
+
+    def change_thing(_, %{id: 1, name: name}, _) do
+      {:ok, %{id: 1, name: name}}
+    end
+
+    def get_thing(_, %{name: "one"}, _), do: {:ok, @thing_one}
+    def get_thing(_, %{name: "two"}, _), do: {:ok, @thing_two}
+
+    def list_things(_, _, _) do
+      things = [
+        @thing_one,
+        @thing_two
+      ]
+
+      {:ok, things}
+    end
+  end
+
+  defmodule Schema do
+    use Absinthe.Schema
+
+    object :thing do
+      field(:id, non_null(:integer))
+      field(:name, non_null(:string))
+    end
+
+    query do
+      field :things, list_of(:thing) do
+        resolve(&Resolvers.list_things/3)
+      end
+
+      field :thing, :thing do
+        arg(:name, non_null(:string))
+        resolve(&Resolvers.get_thing/3)
+      end
+    end
+
+    mutation do
+      field :change_thing, :thing do
+        arg(:id, non_null(:integer))
+        arg(:name, non_null(:string))
+        resolve(&Resolvers.change_thing/3)
+      end
+    end
+  end
+
   defmodule GraphSocket do
     use Absinthe.GraphqlWS.Socket, schema: Test.Site.Schema
   end
