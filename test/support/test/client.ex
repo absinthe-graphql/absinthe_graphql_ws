@@ -1,11 +1,13 @@
 defmodule Test.Client do
   use GenServer
+  require Logger
 
   defstruct [
     :gun,
     :gun_process_monitor,
     :gun_stream_ref,
     :caller_ref,
+    :timeout_ref,
     reply_buffer: []
   ]
 
@@ -17,7 +19,7 @@ defmodule Test.Client do
     GenServer.stop(pid, :normal)
   end
 
-  def get_replies(pid), do: GenServer.call(pid, :get_replies)
+  def get_new_replies(pid), do: GenServer.call(pid, :get_new_replies, 5000)
   def push(pid, message), do: GenServer.call(pid, {:push, message})
 
   def init(_args) do
@@ -40,9 +42,10 @@ defmodule Test.Client do
     end
   end
 
-  def handle_call(:get_replies, caller_ref, %{caller_ref: nil} = state) do
+  def handle_call(:get_new_replies, caller_ref, %{caller_ref: nil} = state) do
     if state.reply_buffer == [] do
-      {:noreply, %{state | caller_ref: caller_ref}}
+      timeout_ref = Process.send_after(self(), :get_replies_timeout, 1000)
+      {:noreply, %{state | caller_ref: caller_ref, timeout_ref: timeout_ref}}
     else
       {:reply, {:ok, state.reply_buffer}, %{state | reply_buffer: []}}
     end
@@ -68,11 +71,12 @@ defmodule Test.Client do
     {:stop, reason, state}
   end
 
-  def handle_info({:gun_ws, _pid, _stream_ref, {:text, payload}}, %{caller_ref: ref} = state)
-      when not is_nil(ref) do
+  def handle_info({:gun_ws, _pid, _stream_ref, {:text, payload}}, %{caller_ref: ref, timeout_ref: timeout_ref} = state)
+      when not is_nil(ref) and is_reference(timeout_ref) do
+    Process.cancel_timer(timeout_ref)
     message = Jason.decode!(payload)
-    GenServer.reply(ref, {:ok, [message]})
-    {:noreply, %{state | caller_ref: nil}}
+    GenServer.reply(ref, {:ok, [message | state.reply_buffer]})
+    {:noreply, %{state | caller_ref: nil, reply_buffer: [], timeout_ref: nil}}
   end
 
   def handle_info({:gun_ws, _pid, _stream_ref, {:text, payload}}, state) do
@@ -80,8 +84,15 @@ defmodule Test.Client do
     {:noreply, %{state | reply_buffer: [message | state.reply_buffer]}}
   end
 
+  def handle_info(:get_replies_timeout, %{caller_ref: ref} = state)
+      when not is_nil(ref) do
+    debug("get_replies timeout")
+    GenServer.reply(ref, {:ok, state.reply_buffer})
+    {:noreply, %{state | caller_ref: nil, reply_buffer: [], timeout_ref: nil}}
+  end
+
   def handle_info(msg, state) do
-    warn("message: #{inspect(msg)}")
+    warn("unhandled handle_info: #{inspect(msg)}")
     {:noreply, state}
   end
 
@@ -101,5 +112,6 @@ defmodule Test.Client do
     end
   end
 
-  defp warn(msg), do: IO.warn("[client@#{inspect(self())}] #{msg}")
+  defp debug(msg), do: Logger.debug("[client@#{inspect(self())}] #{msg}")
+  defp warn(msg), do: Logger.warn("[client@#{inspect(self())}] #{msg}")
 end

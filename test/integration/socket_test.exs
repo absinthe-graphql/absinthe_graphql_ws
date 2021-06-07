@@ -9,7 +9,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
 
   def send_connection_init(%{client: client}) do
     :ok = Test.Client.push(client, %{type: "connection_init"})
-    assert {:ok, [%{"type" => "connection_ack"}]} = Test.Client.get_replies(client)
+    assert {:ok, [%{"type" => "connection_ack"}]} = Test.Client.get_new_replies(client)
     :ok
   end
 
@@ -25,7 +25,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
       assert {:ok, client} = Test.Client.start()
       :ok = Test.Client.push(client, %{type: "connection_init"})
 
-      assert {:ok, replies} = Test.Client.get_replies(client)
+      assert {:ok, replies} = Test.Client.get_new_replies(client)
 
       assert replies == [
                %{
@@ -66,7 +66,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
                   "type" => "next",
                   "id" => ^id
                 }
-              ]} = Test.Client.get_replies(client)
+              ]} = Test.Client.get_new_replies(client)
 
       assert {:ok,
               [
@@ -75,7 +75,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
                   "type" => "complete",
                   "id" => ^id
                 }
-              ]} = Test.Client.get_replies(client)
+              ]} = Test.Client.get_new_replies(client)
     end
   end
 
@@ -113,7 +113,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
                   "type" => "next",
                   "id" => ^id
                 }
-              ]} = Test.Client.get_replies(client)
+              ]} = Test.Client.get_new_replies(client)
 
       assert {:ok,
               [
@@ -122,7 +122,51 @@ defmodule Absinthe.GraphqlWS.SocketTest do
                   "type" => "complete",
                   "id" => ^id
                 }
-              ]} = Test.Client.get_replies(client)
+              ]} = Test.Client.get_new_replies(client)
+    end
+  end
+
+  describe "on Subscribe with a subscription" do
+    setup [:setup_client, :send_connection_init]
+
+    test "pushes Next messages for the subscription topic, as they are published", %{client: client} do
+      id = "subscription"
+
+      :ok =
+        Test.Client.push(client, %{
+          id: id,
+          type: "subscribe",
+          payload: %{
+            query: """
+            subscription ThingChanges($id: Integer!) {
+              thing_changes(id: $id) {
+                id
+                name
+              }
+            }
+            """,
+            variables: %{id: 2}
+          }
+        })
+
+      assert {:ok, []} = Test.Client.get_new_replies(client)
+
+      Absinthe.Subscription.publish(Test.Site.Endpoint, %{name: "blue"}, thing_changes: "2")
+
+      assert {:ok,
+              [
+                %{
+                  "payload" => %{
+                    "data" => %{"thing_changes" => %{"id" => 2, "name" => "blue"}}
+                  },
+                  "type" => "next",
+                  "id" => ^id
+                }
+              ]} = Test.Client.get_new_replies(client)
+
+      Absinthe.Subscription.publish(Test.Site.Endpoint, %{name: "fun"}, thing_changes: "1")
+
+      assert {:ok, []} = Test.Client.get_new_replies(client)
     end
   end
 end

@@ -14,6 +14,10 @@ defmodule Test.Site do
       {:ok, %{id: 1, name: name}}
     end
 
+    def changes_subscription(changes, subscription_params, _) do
+      {:ok, changes |> Map.merge(subscription_params)}
+    end
+
     def get_thing(_, %{name: "one"}, _), do: {:ok, @thing_one}
     def get_thing(_, %{name: "two"}, _), do: {:ok, @thing_two}
 
@@ -51,6 +55,18 @@ defmodule Test.Site do
         arg(:id, non_null(:integer))
         arg(:name, non_null(:string))
         resolve(&Resolvers.change_thing/3)
+      end
+    end
+
+    subscription do
+      field :thing_changes, :thing do
+        arg(:id, non_null(:integer))
+
+        config(fn %{id: id}, _resolver ->
+          {:ok, topic: to_string(id)}
+        end)
+
+        resolve(&Resolvers.changes_subscription/3)
       end
     end
   end
