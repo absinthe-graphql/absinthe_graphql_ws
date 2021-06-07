@@ -97,7 +97,7 @@ defmodule Absinthe.GraphqlWS.Socket do
         {:ok, socket}
       end
   """
-  @callback handle_message(params :: map(), t()) :: Socket.response()
+  @callback handle_message(params :: term(), t()) :: Socket.response()
 
   @optional_callbacks handle_message: 2
 
