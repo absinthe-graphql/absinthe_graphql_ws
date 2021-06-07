@@ -16,7 +16,12 @@ Add `absinthe_graphql_ws` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:absinthe_graphql_ws, github: "geometerio/absinthe_graphql_ws"}
+    {:absinthe_graphql_ws, "~> 0.1"}
   ]
 end
 ```
+
+## Contributing
+
+* Pull requests that may be rebased are preferrable to merges or squashes.
+* Please **do not** increment the version number in pull requests.
