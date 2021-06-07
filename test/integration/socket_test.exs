@@ -168,5 +168,46 @@ defmodule Absinthe.GraphqlWS.SocketTest do
 
       assert {:ok, []} = Test.Client.get_new_replies(client)
     end
+
+    test "stops a subscription when client sends a Complete", %{client: client} do
+      id = "subscription-to-be-cancelled"
+
+      :ok =
+        Test.Client.push(client, %{
+          id: id,
+          type: "subscribe",
+          payload: %{
+            query: """
+            subscription ThingChanges($id: Integer!) {
+              thing_changes(id: $id) {
+                id
+                name
+              }
+            }
+            """,
+            variables: %{id: 2}
+          }
+        })
+
+      assert {:ok, []} = Test.Client.get_new_replies(client)
+      Absinthe.Subscription.publish(Test.Site.Endpoint, %{name: "blue"}, thing_changes: "2")
+
+      assert {:ok,
+              [
+                %{
+                  "payload" => %{
+                    "data" => %{"thing_changes" => %{}}
+                  },
+                  "type" => "next",
+                  "id" => ^id
+                }
+              ]} = Test.Client.get_new_replies(client)
+
+      :ok = Test.Client.push(client, %{id: id, type: "complete"})
+      assert {:ok, []} = Test.Client.get_new_replies(client)
+
+      Absinthe.Subscription.publish(Test.Site.Endpoint, %{name: "true"}, thing_changes: "2")
+      assert {:ok, []} = Test.Client.get_new_replies(client)
+    end
   end
 end
