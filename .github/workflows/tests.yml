@@ -120,6 +120,11 @@ jobs:
         with:
           elixir-version: "1.12.1"
           otp-version: "24.0.2"
+      - name: Cache deps
+        uses: actions/cache@v2
+        with:
+          path: deps
+          key: ${{ runner.os }}-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
       - name: Publish
         uses: ./.github/publish
         with:
