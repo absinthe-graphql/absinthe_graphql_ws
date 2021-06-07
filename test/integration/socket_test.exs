@@ -210,4 +210,33 @@ defmodule Absinthe.GraphqlWS.SocketTest do
       assert {:ok, []} = Test.Client.get_new_replies(client)
     end
   end
+
+  describe "handle_message callbacks" do
+    setup [:setup_client, :send_connection_init]
+
+    test "are called when the socket receives &handle_info/2 with a message not caught by graphql-ws", %{client: client} do
+      id = "handle-message-callback"
+
+      Test.Site.TestPubSub.subscribe(:handle_message_callback)
+
+      :ok =
+        Test.Client.push(client, %{
+          id: id,
+          type: "subscribe",
+          payload: %{
+            query: """
+            subscription HandleMessage($subscriptionParam: String!) {
+              handle_message(subscriptionParam: $subscriptionParam)
+            }
+            """,
+            variables: %{subscriptionParam: "boo"}
+          }
+        })
+
+      assert {:ok, []} = Test.Client.get_new_replies(client)
+
+      assert_receive({:subscription, %{}} = reply)
+      assert reply == {:subscription, %{subscription_param: "boo"}}
+    end
+  end
 end

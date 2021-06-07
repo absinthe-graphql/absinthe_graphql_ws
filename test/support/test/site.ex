@@ -6,6 +6,16 @@ defmodule Test.Site do
   def host, do: @host
   def port, do: @port
 
+  defmodule GraphSocket do
+    use Absinthe.GraphqlWS.Socket, schema: Test.Site.Schema
+
+    @impl Absinthe.GraphqlWS.Socket
+    def handle_message({:subscription, params}, socket) do
+      Test.Site.TestPubSub.notify(:handle_message_callback, {:subscription, params})
+      {:ok, socket}
+    end
+  end
+
   defmodule Resolvers do
     @thing_one %{id: 1, name: "one"}
     @thing_two %{id: 2, name: "two"}
@@ -20,6 +30,8 @@ defmodule Test.Site do
 
     def get_thing(_, %{name: "one"}, _), do: {:ok, @thing_one}
     def get_thing(_, %{name: "two"}, _), do: {:ok, @thing_two}
+
+    def handle_messages(_, _, _), do: {:ok, true}
 
     def list_things(_, _, _) do
       things = [
@@ -68,11 +80,18 @@ defmodule Test.Site do
 
         resolve(&Resolvers.changes_subscription/3)
       end
-    end
-  end
 
-  defmodule GraphSocket do
-    use Absinthe.GraphqlWS.Socket, schema: Test.Site.Schema
+      field :handle_message, :boolean do
+        arg(:subscription_param, :string)
+
+        config(fn params, _resolver ->
+          send(self(), {:subscription, params})
+          {:ok, topic: "handle_messages"}
+        end)
+
+        resolve(&Resolvers.handle_messages/3)
+      end
+    end
   end
 
   defmodule Application do
