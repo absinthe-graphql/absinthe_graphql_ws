@@ -56,7 +56,7 @@ defmodule AbsintheGraphqlWS.MixProject do
       extras: [
         "guides/overview.md",
         "guides/installation.md",
-        "CHANGELOG.md",
+        "guides/changelog.md",
         "README.md"
       ],
       groups_for_modules: docs_module_groups(),

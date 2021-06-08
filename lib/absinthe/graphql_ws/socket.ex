@@ -11,6 +11,15 @@ defmodule Absinthe.GraphqlWS.Socket do
   * `pipeline` - optional - A `{module, function}` tuple defining how to generate an Absinthe pipeline
     for each incoming message. Defaults to `{Absinthe.GraphqlWS.Socket, :absinthe_pipeline}`.
 
+  ## Pipeline modification
+
+  The `:pipeline` option to socket definition defaults to `{Absinthe.GraphqlWS.Socket, :absinthe_pipeline}`.
+  This function returns the default pipeline provided by `&Absinthe.Pipeline.for_document/2`. Absinthe query execution
+  can be modified by altering the list of phases in this pipeline. See `Absinthe.Pipeline` for more info.
+
+  If an alternate pipeline function is provided, it must accept the arguments `schema` and `options`. These
+  options include the current context and any variables that are included with the requested query.
+
   ## Example
 
       defmodule MyAppWeb.GraphqlSocket do
@@ -173,7 +182,7 @@ defmodule Absinthe.GraphqlWS.Socket do
 
   @doc """
   Provides a stub implementation that allows the socket to start. Phoenix.Socket.Transport
-  expects a child spec that starts a process, so we do so with a noop Task.
+  expects a child spec that starts a process; we do so with a noop Task.
   """
   def __child_spec__(_module, _opts, _socket_opts) do
     %{id: Task, start: {Task, :start_link, [fn -> :ok end]}, restart: :transient}
@@ -182,6 +191,7 @@ defmodule Absinthe.GraphqlWS.Socket do
   @doc """
   When a client connects to this websocket, this function is called to initialize the socket.
   """
+  @spec __connect__(module(), map(), Keyword.t()) :: {:ok, Socket.t()}
   def __connect__(module, socket, options) do
     absinthe_pipeline = Keyword.get(options, :pipeline, {__MODULE__, :absinthe_pipeline})
     pubsub = socket.endpoint.config(:pubsub_server)
@@ -210,8 +220,15 @@ defmodule Absinthe.GraphqlWS.Socket do
   end
 
   @doc """
-  Provides the default absinthe pipeline
+  Provides the default absinthe pipeline.
+
+  ## Params
+
+  * `schema` - An `Absinthe.Schema.t()`
+  * `options` - A keyword list with the current context, variables, etc for the
+    current query.
   """
+  @spec absinthe_pipeline(Absinthe.Schema.t(), Keyword.t()) :: Absinthe.Pipeline.t()
   def absinthe_pipeline(schema, options) do
     schema
     |> Absinthe.Pipeline.for_document(options)

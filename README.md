@@ -4,6 +4,8 @@ Adds a websocket transport for the
 [GraphQL over WebSocket Protocol](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md)
 to Absinthe running in Phoenix.
 
+See the [hex docs](https://hexdocs.pm/absinthe_graphql_ws) for more information.
+
 ## References
 
 * https://github.com/enisdenjo/graphql-ws
