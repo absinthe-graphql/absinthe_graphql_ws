@@ -106,8 +106,12 @@ defmodule Absinthe.GraphqlWS.Transport do
   https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md
   """
   @spec handle_message(map(), Socket.t()) :: Socket.reply()
-  def handle_message(%{"type" => "connection_init"}, socket) do
-    {:reply, :ok, {:text, Message.ConnectionAck.new()}, socket}
+  def handle_message(%{"type" => "connection_init"} = message, socket) do
+    if function_exported?(socket.handler, :handle_init, 2) do
+      socket.handler.handle_init(Map.get(message, "payload", %{}), socket)
+    else
+      {:reply, :ok, {:text, Message.ConnectionAck.new()}, socket}
+    end
   end
 
   def handle_message(%{"id" => id, "type" => "subscribe", "payload" => payload}, socket) do

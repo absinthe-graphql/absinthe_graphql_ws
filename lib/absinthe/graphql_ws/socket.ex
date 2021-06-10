@@ -95,7 +95,6 @@ defmodule Absinthe.GraphqlWS.Socket do
   Handles messages that are sent to this process through `send/2`, which have not been caught
   by the default implementation.
 
-
   ## Example
 
       def handle_message({:thing, thing}, socket) do
@@ -108,7 +107,28 @@ defmodule Absinthe.GraphqlWS.Socket do
   """
   @callback handle_message(params :: term(), t()) :: Socket.response()
 
-  @optional_callbacks handle_message: 2
+  @doc """
+  Handle the `connection_init` message sent by the socket implementation. This will receive
+  the `payload` from the message, defaulting to an empty map if received from the client.
+
+  This can be used for custom authentication/authorization, using
+  `Absinthe.GraphqlWS.Util.assign_context/2` to modify the Absinthe context.
+
+  ## Example
+
+      defmodule MySocket do
+        use Absinthe.GraphqlWS.Socket, schema: MySchema
+
+        def handle_init(%{"user_id" => user_id}) do
+          user = find_user(user_id)
+          socket = assign_context(socket, current_user: user)
+          %{:reply, :ok, {:text, Absinthe.GraphqlWS.Message.ConnectionAck.new()}, socket}
+        end
+      end
+  """
+  @callback handle_init(payload :: map(), t()) :: Socket.reply()
+
+  @optional_callbacks handle_message: 2, handle_init: 2
 
   @spec __after_compile__(any(), any()) :: :ok
   def __after_compile__(env, _bytecode) do
