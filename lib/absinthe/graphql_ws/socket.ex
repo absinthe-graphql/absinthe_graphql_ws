@@ -44,6 +44,7 @@ defmodule Absinthe.GraphqlWS.Socket do
     :keepalive,
     :pubsub,
     assigns: %{},
+    initialized?: false,
     subscriptions: %{}
   ]
 
@@ -55,6 +56,7 @@ defmodule Absinthe.GraphqlWS.Socket do
           assigns: map(),
           connect_info: map(),
           endpoint: module(),
+          initialized?: boolean(),
           keepalive: integer(),
           subscriptions: map()
         }
@@ -67,7 +69,7 @@ defmodule Absinthe.GraphqlWS.Socket do
           | :pong
 
   @typedoc """
-  Opcode atoms for messages returned by `handle_in/2`.
+  Opcode atoms for messages pushed to the client.
   """
   @type opcode() ::
           :text
@@ -75,37 +77,81 @@ defmodule Absinthe.GraphqlWS.Socket do
           | control()
 
   @typedoc """
-  Valid replies from `Absinthe.GraphqlWS.Transport.handle_in/2`
+  JSON that conforms to the `graphql-ws` protocol.
   """
-  @type reply() ::
+  @type message() :: binary()
+
+  @typedoc """
+  A websocket frame to send to the client.
+  """
+  @type frame() :: {opcode(), message()}
+  @typedoc """
+  Used internally by `Absinthe.GraphqlWS.Transport.handle_in/2`.
+
+  These are return values to incoming messages from a websocket.
+
+  ## Values
+
+  * `{:ok, socket}` - save new socket state, without sending any data to the client.
+  * `{:reply, :ok, {:text, "{}"}, socket}` - send JSON content to the client.
+  * `{:reply, :error, {:text, "{}"}, socket}` - send an error with JSON payload to the client.
+  * `{:stop, :normal, socket}` - shut down the socket process.
+  """
+  @type reply_inbound() ::
           {:ok, t()}
-          | {:reply, :ok, {opcode(), term()}, t()}
-          | {:reply, :error, {opcode(), term()}, t()}
+          | {:reply, :ok, frame(), t()}
+          | {:reply, :error, frame(), t()}
           | {:stop, term(), t()}
 
   @typedoc """
-  Valid replies from `c:handle_message/2`
+  Valid return values from `c:handle_message/2`.
+
+  These are return values to messages that have been received from within Elixir
+
+  ## Values
+
+  * `{:ok, socket}` - save new socket state, without sending any data to the client.
+  * `{:push, {:text, Message.Next.new(id, %{})}, socket}` - save new socket state, and send data to the client.
+  * `{:stop, :reason, socket}` - stop the socket.
   """
-  @type response() ::
+  @type reply_message() ::
           {:ok, t()}
-          | {:push, {opcode(), term()}, t()}
+          | {:push, frame(), t()}
+          | {:stop, term(), t()}
+
+  @typedoc """
+  Return values from `c:handle_init/2`.
+  """
+  @type init() ::
+          {:ok, map(), t()}
+          | {:error, map(), t()}
           | {:stop, term(), t()}
 
   @doc """
   Handles messages that are sent to this process through `send/2`, which have not been caught
-  by the default implementation.
+  by the default implementation. It must return a `t:reply_message/0`.
+
+  If pushing content to the websocket, it must return a tuple in the form
+  `{:push, {:text, message}, socket}`, where `message` is JSON that represents a valid `grapql-ws`
+  message.
 
   ## Example
 
+      alias Absinthe.GraphqlWS.Message
+
       def handle_message({:thing, thing}, socket) do
         {:ok, assign(socket, :thing, thing)}
+      end
+
+      def handle_message({:send, id, payload}, socket) do
+        {:push, {:text, Message.Next.new(id, payload)}, socket}
       end
 
       def handle_message(_msg, socket) do
         {:ok, socket}
       end
   """
-  @callback handle_message(params :: term(), t()) :: Socket.response()
+  @callback handle_message(params :: term(), t()) :: Socket.reply_message()
 
   @doc """
   Handle the `connection_init` message sent by the socket implementation. This will receive
@@ -120,13 +166,17 @@ defmodule Absinthe.GraphqlWS.Socket do
         use Absinthe.GraphqlWS.Socket, schema: MySchema
 
         def handle_init(%{"user_id" => user_id}) do
-          user = find_user(user_id)
-          socket = assign_context(socket, current_user: user)
-          %{:reply, :ok, {:text, Absinthe.GraphqlWS.Message.ConnectionAck.new()}, socket}
+          case find_user(user_id) do
+            nil ->
+              {:error, %{}, socket}
+            user ->
+              socket = assign_context(socket, current_user: user)
+              {:ok, %{name: user.name}, socket}
+          end
         end
       end
   """
-  @callback handle_init(payload :: map(), t()) :: Socket.reply()
+  @callback handle_init(payload :: map(), t()) :: Socket.init()
 
   @optional_callbacks handle_message: 2, handle_init: 2
 

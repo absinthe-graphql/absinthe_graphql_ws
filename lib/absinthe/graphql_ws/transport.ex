@@ -6,6 +6,9 @@ defmodule Absinthe.GraphqlWS.Transport do
   If the optional `c:Absinthe.GraphqlWS.Socket.handle_message/2` callback is implemented on
   the socket, then messages that are not specifically caught by `handle_info/2` in this
   module will be passed through to `c:Absinthe.GraphqlWS.Socket.handle_message/2`.
+
+  **Note:** This module is not intended for use by individuals integrating this library into
+  their codebase, but is documented to help understand the intentions of the code.
   """
 
   alias Absinthe.GraphqlWS.Message
@@ -16,13 +19,18 @@ defmodule Absinthe.GraphqlWS.Transport do
   @ping "ping"
   @pong "pong"
 
+  @type control :: Socket.control()
+  @type reply_inbound() :: Socket.reply_inbound()
+  @type reply_message() :: Socket.reply_message()
+  @type socket() :: Socket.t()
+
   @doc """
   Generally this will only receive `:pong` messages in response to our keepalive
   ping messages. Client-side websocket libraries handle these control frames
   automatically in order to adhere to the spec, so unless a customer is writing their
   own low-level websocket it should be handled for them.
   """
-  @spec handle_control({term(), opcode: Socket.control()}, Socket.t()) :: Socket.reply()
+  @spec handle_control({term(), opcode: control()}, socket()) :: reply_inbound()
   def handle_control({_, opcode: :ping}, socket), do: {:reply, :ok, {:pong, @pong}, socket}
   def handle_control({_, opcode: :pong}, socket), do: {:ok, socket}
 
@@ -35,12 +43,12 @@ defmodule Absinthe.GraphqlWS.Transport do
   Receive messages from clients. We expect all incoming messages to be JSON encoded
   text, so if something else comes in we blow up.
   """
-  @spec handle_in({binary(), [opcode: :text]}, Socket.t()) :: Socket.reply()
+  @spec handle_in({binary(), [opcode: :text]}, socket()) :: reply_inbound()
   def handle_in({text, [opcode: :text]}, socket) do
     Jason.decode(text)
     |> case do
       {:ok, json} ->
-        handle_message(json, socket)
+        handle_inbound(json, socket)
 
       {:error, reason} ->
         warn("JSON parse error: #{inspect(reason)}")
@@ -64,10 +72,10 @@ defmodule Absinthe.GraphqlWS.Transport do
     with a `Next` message followed by a `Complete` message. We follow through on the latter by
     putting a message on our process queue.
 
-  * fallthrough - If `handle_message/2` is defined on the socket, then uncaught messages will be
-    sent
+  * fallthrough - If `c:Absinthe.GraphqlWs.Socket.handle_message/2` is defined on the socket,
+    then uncaught messages will be sent there.
   """
-  @spec handle_info(term(), Socket.t()) :: Socket.response()
+  @spec handle_info(term(), socket()) :: reply_message()
   def handle_info(:keepalive, socket) do
     Process.send_after(self(), :keepalive, socket.keepalive)
     {:push, {:ping, @ping}, socket}
@@ -93,7 +101,7 @@ defmodule Absinthe.GraphqlWS.Transport do
   @doc """
   Process was stopped.
   """
-  @spec terminate(term(), Socket.t()) :: :ok
+  @spec terminate(term(), socket()) :: :ok
   def terminate(reason, _socket) do
     debug("terminated: #{inspect(reason)}")
     :ok
@@ -105,21 +113,27 @@ defmodule Absinthe.GraphqlWS.Transport do
   See:
   https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md
   """
-  @spec handle_message(map(), Socket.t()) :: Socket.reply()
-  def handle_message(%{"type" => "connection_init"} = message, socket) do
-    if function_exported?(socket.handler, :handle_init, 2) do
-      socket.handler.handle_init(Map.get(message, "payload", %{}), socket)
+  @spec handle_inbound(map(), socket()) :: reply_inbound()
+  def handle_inbound(%{"type" => "connection_init"} = message, %{handler: handler} = socket) do
+    if function_exported?(handler, :handle_init, 2) do
+      case handler.handle_init(Map.get(message, "payload", %{}), socket) do
+        {:ok, payload, socket} ->
+          {:reply, :ok, {:text, Message.ConnectionAck.new(payload)}, %{socket | initialized?: true}}
+
+        {:error, payload, socket} ->
+          {:reply, :ok, {:text, Message.Error.new(payload)}, socket}
+      end
     else
-      {:reply, :ok, {:text, Message.ConnectionAck.new()}, socket}
+      {:reply, :ok, {:text, Message.ConnectionAck.new()}, %{socket | initialized?: true}}
     end
   end
 
-  def handle_message(%{"id" => id, "type" => "subscribe", "payload" => payload}, socket) do
+  def handle_inbound(%{"id" => id, "type" => "subscribe", "payload" => payload}, socket) do
     payload
     |> handle_subscribe(id, socket)
   end
 
-  def handle_message(%{"id" => id, "type" => "complete"}, socket) do
+  def handle_inbound(%{"id" => id, "type" => "complete"}, socket) do
     socket.subscriptions
     |> Enum.find_value(fn
       {topic, ^id} ->
