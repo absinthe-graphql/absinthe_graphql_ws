@@ -76,7 +76,8 @@ defmodule AbsintheGraphqlWS.MixProject do
         Absinthe.GraphqlWS.Message.ConnectionAck,
         Absinthe.GraphqlWS.Message.Complete,
         Absinthe.GraphqlWS.Message.Error,
-        Absinthe.GraphqlWS.Message.Next
+        Absinthe.GraphqlWS.Message.Next,
+        Absinthe.GraphqlWS.Message.Pong
       ]
     ]
   end
