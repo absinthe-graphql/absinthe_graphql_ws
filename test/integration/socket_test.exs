@@ -9,8 +9,31 @@ defmodule Absinthe.GraphqlWS.SocketTest do
 
   def send_connection_init(%{client: client}) do
     :ok = Test.Client.push(client, %{type: "connection_init"})
-    assert {:ok, [%{"type" => "connection_ack"}]} = Test.Client.get_new_replies(client)
+
+    assert {:ok,
+            [
+              {:text, Jason.encode!(%{"type" => "connection_ack", "payload" => %{}})}
+            ]} ==
+             Test.Client.get_new_replies(client)
+
     :ok
+  end
+
+  def assert_connected(client) do
+    assert Test.Client.connected?(client)
+  end
+
+  def assert_socket_closed(client, code, payload) do
+    assert {:ok, [{:close, ^code, ^payload}]} = Test.Client.get_new_replies(client)
+
+    Test.Retry.retry_for(5000, fn ->
+      refute Test.Client.connected?(client)
+    end)
+  end
+
+  defp assert_json_received(client, payload) do
+    assert {:ok, [{:text, json}]} = Test.Client.get_new_replies(client)
+    assert json == Jason.encode!(payload)
   end
 
   describe "initalization" do
@@ -21,18 +44,44 @@ defmodule Absinthe.GraphqlWS.SocketTest do
   end
 
   describe "on ConnectionInit" do
-    test "replies with ConnectionAck" do
-      assert {:ok, client} = Test.Client.start()
+    setup :setup_client
+
+    test "replies with ConnectionAck", %{client: client} do
       :ok = Test.Client.push(client, %{type: "connection_init"})
 
-      assert {:ok, replies} = Test.Client.get_new_replies(client)
+      assert_json_received(client, %{
+        "payload" => %{},
+        "type" => "connection_ack"
+      })
+    end
 
-      assert replies == [
-               %{
-                 "payload" => %{},
-                 "type" => "connection_ack"
-               }
-             ]
+    test "closes the socket with an error if received multiple times", %{client: client} do
+      :ok = Test.Client.push(client, %{type: "connection_init"})
+      assert {:ok, [{:text, _}]} = Test.Client.get_new_replies(client)
+
+      assert_connected(client)
+
+      :ok = Test.Client.push(client, %{type: "connection_init"})
+      assert_socket_closed(client, 4429, "Too many initialisation requests")
+    end
+  end
+
+  describe "on Subscribe if ConnectionInit has not been sent" do
+    setup :setup_client
+
+    test "closes the socket with 4400", %{client: client} do
+      id = "query-before-init"
+
+      query = """
+      query {
+        things {
+          name
+        }
+      }
+      """
+
+      :ok = Test.Client.push(client, %{id: id, type: "subscribe", payload: %{query: query}})
+      assert_socket_closed(client, 4400, "Subscribe message received before ConnectionInit")
     end
   end
 
@@ -52,30 +101,24 @@ defmodule Absinthe.GraphqlWS.SocketTest do
 
       :ok = Test.Client.push(client, %{id: id, type: "subscribe", payload: %{query: query}})
 
-      assert {:ok,
-              [
-                %{
-                  "payload" => %{
-                    "data" => %{
-                      "things" => [
-                        %{"name" => "one"},
-                        %{"name" => "two"}
-                      ]
-                    }
-                  },
-                  "type" => "next",
-                  "id" => ^id
-                }
-              ]} = Test.Client.get_new_replies(client)
+      assert_json_received(client, %{
+        "payload" => %{
+          "data" => %{
+            "things" => [
+              %{"name" => "one"},
+              %{"name" => "two"}
+            ]
+          }
+        },
+        "type" => "next",
+        "id" => id
+      })
 
-      assert {:ok,
-              [
-                %{
-                  "payload" => %{},
-                  "type" => "complete",
-                  "id" => ^id
-                }
-              ]} = Test.Client.get_new_replies(client)
+      assert_json_received(client, %{
+        "payload" => %{},
+        "type" => "complete",
+        "id" => id
+      })
     end
   end
 
@@ -102,27 +145,21 @@ defmodule Absinthe.GraphqlWS.SocketTest do
           }
         })
 
-      assert {:ok,
-              [
-                %{
-                  "payload" => %{
-                    "data" => %{
-                      "change_thing" => %{"id" => 1, "name" => "another one"}
-                    }
-                  },
-                  "type" => "next",
-                  "id" => ^id
-                }
-              ]} = Test.Client.get_new_replies(client)
+      assert_json_received(client, %{
+        "payload" => %{
+          "data" => %{
+            "change_thing" => %{"id" => 1, "name" => "another one"}
+          }
+        },
+        "type" => "next",
+        "id" => id
+      })
 
-      assert {:ok,
-              [
-                %{
-                  "payload" => %{},
-                  "type" => "complete",
-                  "id" => ^id
-                }
-              ]} = Test.Client.get_new_replies(client)
+      assert_json_received(client, %{
+        "payload" => %{},
+        "type" => "complete",
+        "id" => id
+      })
     end
   end
 
@@ -153,16 +190,13 @@ defmodule Absinthe.GraphqlWS.SocketTest do
 
       Absinthe.Subscription.publish(Test.Site.Endpoint, %{name: "blue"}, thing_changes: "2")
 
-      assert {:ok,
-              [
-                %{
-                  "payload" => %{
-                    "data" => %{"thing_changes" => %{"id" => 2, "name" => "blue"}}
-                  },
-                  "type" => "next",
-                  "id" => ^id
-                }
-              ]} = Test.Client.get_new_replies(client)
+      assert_json_received(client, %{
+        "payload" => %{
+          "data" => %{"thing_changes" => %{"id" => 2, "name" => "blue"}}
+        },
+        "type" => "next",
+        "id" => id
+      })
 
       Absinthe.Subscription.publish(Test.Site.Endpoint, %{name: "fun"}, thing_changes: "1")
 
@@ -192,16 +226,13 @@ defmodule Absinthe.GraphqlWS.SocketTest do
       assert {:ok, []} = Test.Client.get_new_replies(client)
       Absinthe.Subscription.publish(Test.Site.Endpoint, %{name: "blue"}, thing_changes: "2")
 
-      assert {:ok,
-              [
-                %{
-                  "payload" => %{
-                    "data" => %{"thing_changes" => %{}}
-                  },
-                  "type" => "next",
-                  "id" => ^id
-                }
-              ]} = Test.Client.get_new_replies(client)
+      assert_json_received(client, %{
+        "payload" => %{
+          "data" => %{"thing_changes" => %{"id" => 2, "name" => "blue"}}
+        },
+        "type" => "next",
+        "id" => id
+      })
 
       :ok = Test.Client.push(client, %{id: id, type: "complete"})
       assert {:ok, []} = Test.Client.get_new_replies(client)

@@ -90,6 +90,10 @@ defmodule Absinthe.GraphqlWS.Transport do
     {:push, {:text, Message.Complete.new(id)}, socket}
   end
 
+  def handle_info(:queue_exit, _socket) do
+    exit(:normal)
+  end
+
   def handle_info(message, socket) do
     if function_exported?(socket.handler, :handle_message, 2) do
       socket.handler.handle_message(message, socket)
@@ -114,6 +118,10 @@ defmodule Absinthe.GraphqlWS.Transport do
   https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md
   """
   @spec handle_inbound(map(), socket()) :: reply_inbound()
+  def handle_inbound(%{"type" => "connection_init"}, %{initialized?: true} = socket) do
+    close(4429, "Too many initialisation requests", socket)
+  end
+
   def handle_inbound(%{"type" => "connection_init"} = message, %{handler: handler} = socket) do
     if function_exported?(handler, :handle_init, 2) do
       case handler.handle_init(Map.get(message, "payload", %{}), socket) do
@@ -127,6 +135,11 @@ defmodule Absinthe.GraphqlWS.Transport do
       {:reply, :ok, {:text, Message.ConnectionAck.new()}, %{socket | initialized?: true}}
     end
   end
+
+  def handle_inbound(%{"type" => "subscribe"}, %{initialized?: false} = socket) do
+    close(4400, "Subscribe message received before ConnectionInit", socket)
+  end
+
 
   def handle_inbound(%{"id" => id, "type" => "subscribe", "payload" => payload}, socket) do
     payload
@@ -188,6 +201,11 @@ defmodule Absinthe.GraphqlWS.Transport do
     end
   end
 
+  defp close(code, message, socket) do
+    queue_exit()
+    {:reply, :ok, {:close, code, message}, socket}
+  end
+
   defp parse_query(%{"query" => query}) when is_binary(query), do: {:ok, query}
   defp parse_query(_), do: {:ok, ""}
 
@@ -198,6 +216,8 @@ defmodule Absinthe.GraphqlWS.Transport do
     schema
     |> Absinthe.Pipeline.for_document(options)
   end
+
+  defp queue_exit, do: send(self(), :queue_exit)
 
   defp run_doc(socket, id, query, config, opts) do
     case run(query, config[:schema], config[:pipeline], opts) do
