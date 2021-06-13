@@ -60,6 +60,7 @@ defmodule Absinthe.GraphqlWS.Socket do
           keepalive: integer(),
           subscriptions: map()
         }
+  @type socket() :: t()
 
   @typedoc """
   Opcode atoms for messages handled by `handle_control/2`. Used by server-side keepalive messages.
@@ -98,10 +99,10 @@ defmodule Absinthe.GraphqlWS.Socket do
   * `{:stop, :normal, socket}` - shut down the socket process.
   """
   @type reply_inbound() ::
-          {:ok, t()}
-          | {:reply, :ok, frame(), t()}
-          | {:reply, :error, frame(), t()}
-          | {:stop, term(), t()}
+          {:ok, socket()}
+          | {:reply, :ok, frame(), socket()}
+          | {:reply, :error, frame(), socket()}
+          | {:stop, term(), socket()}
 
   @typedoc """
   Valid return values from `c:handle_message/2`.
@@ -115,17 +116,17 @@ defmodule Absinthe.GraphqlWS.Socket do
   * `{:stop, :reason, socket}` - stop the socket.
   """
   @type reply_message() ::
-          {:ok, t()}
-          | {:push, frame(), t()}
-          | {:stop, term(), t()}
+          {:ok, socket()}
+          | {:push, frame(), socket()}
+          | {:stop, term(), socket()}
 
   @typedoc """
   Return values from `c:handle_init/2`.
   """
   @type init() ::
-          {:ok, map(), t()}
-          | {:error, map(), t()}
-          | {:stop, term(), t()}
+          {:ok, map(), socket()}
+          | {:error, map(), socket()}
+          | {:stop, term(), socket()}
 
   @doc """
   Handles messages that are sent to this process through `send/2`, which have not been caught
@@ -151,7 +152,7 @@ defmodule Absinthe.GraphqlWS.Socket do
         {:ok, socket}
       end
   """
-  @callback handle_message(params :: term(), t()) :: Socket.reply_message()
+  @callback handle_message(params :: term(), socket()) :: Socket.reply_message()
 
   @doc """
   Handle the `connection_init` message sent by the socket implementation. This will receive
@@ -176,7 +177,7 @@ defmodule Absinthe.GraphqlWS.Socket do
         end
       end
   """
-  @callback handle_init(payload :: map(), t()) :: Socket.init()
+  @callback handle_init(payload :: map(), socket()) :: Socket.init()
 
   @optional_callbacks handle_message: 2, handle_init: 2
 
@@ -261,7 +262,7 @@ defmodule Absinthe.GraphqlWS.Socket do
   @doc """
   When a client connects to this websocket, this function is called to initialize the socket.
   """
-  @spec __connect__(module(), map(), Keyword.t()) :: {:ok, Socket.t()}
+  @spec __connect__(module(), map(), Keyword.t()) :: {:ok, socket()}
   def __connect__(module, socket, options) do
     absinthe_pipeline = Keyword.get(options, :pipeline, {__MODULE__, :absinthe_pipeline})
     pubsub = socket.endpoint.config(:pubsub_server)
