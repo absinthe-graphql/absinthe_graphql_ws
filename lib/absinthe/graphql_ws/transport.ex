@@ -172,7 +172,7 @@ defmodule Absinthe.GraphqlWS.Transport do
 
   def handle_inbound(msg, socket) do
     warn("unhandled message #{inspect(msg)}")
-    {:ok, socket}
+    close(4400, "Unhandled message from client", socket)
   end
 
   @doc """
