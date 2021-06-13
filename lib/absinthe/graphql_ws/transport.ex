@@ -140,7 +140,6 @@ defmodule Absinthe.GraphqlWS.Transport do
     close(4400, "Subscribe message received before ConnectionInit", socket)
   end
 
-
   def handle_inbound(%{"id" => id, "type" => "subscribe", "payload" => payload}, socket) do
     payload
     |> handle_subscribe(id, socket)
