@@ -66,6 +66,28 @@ defmodule Absinthe.GraphqlWS.SocketTest do
     end
   end
 
+  describe "on Ping" do
+    setup [:setup_client, :send_connection_init]
+
+    test "replies with Pong", %{client: client} do
+      :ok = Test.Client.push(client, %{type: "ping", payload: %{}})
+
+      assert_json_received(client, %{
+        "payload" => %{},
+        "type" => "pong"
+      })
+    end
+  end
+
+  describe "on message receipt that does not follow the spec" do
+    setup [:setup_client, :send_connection_init]
+
+    test "closes the socket with 4400", %{client: client} do
+      :ok = Test.Client.push(client, %{type: "made_up"})
+      assert_socket_closed(client, 4400, "Unhandled message from client")
+    end
+  end
+
   describe "on Subscribe if ConnectionInit has not been sent" do
     setup :setup_client
 
