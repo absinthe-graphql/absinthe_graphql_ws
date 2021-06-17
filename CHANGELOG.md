@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- Logger statements use macros, so that inspect calls only execute when the log level is set
+  to print the statement.
+- Removes redundant `:queue_exit` message, since Cowboy already closes WebSocket processes when
+ `{:close, code, reason}` is sent to a client.
+
+
 ## 0.2.0
 
 - Adds `Ping` handler.
