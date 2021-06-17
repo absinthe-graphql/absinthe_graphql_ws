@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -e
+
+source ".medic/_support/cecho.sh"
+source ".medic/_support/step.sh"
+
+step_with_output "Generating docs" "mix docs"
+open doc/index.html

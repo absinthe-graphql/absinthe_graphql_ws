@@ -8,3 +8,6 @@
 /tmp/
 absinthe_graphql_ws-*.tar
 erl_crash.dump
+
+.medic/skipped
+.medic/.doctor.out
