@@ -93,10 +93,6 @@ defmodule Absinthe.GraphqlWS.Transport do
     {:push, {:text, Message.Complete.new(id)}, socket}
   end
 
-  def handle_info(:queue_exit, _socket) do
-    exit(:normal)
-  end
-
   def handle_info(message, socket) do
     if function_exported?(socket.handler, :handle_message, 2) do
       socket.handler.handle_message(message, socket)
@@ -204,7 +200,6 @@ defmodule Absinthe.GraphqlWS.Transport do
   end
 
   defp close(code, message, socket) do
-    queue_exit()
     {:reply, :ok, {:close, code, message}, socket}
   end
 
@@ -218,8 +213,6 @@ defmodule Absinthe.GraphqlWS.Transport do
     schema
     |> Absinthe.Pipeline.for_document(options)
   end
-
-  defp queue_exit, do: send(self(), :queue_exit)
 
   defp run_doc(socket, id, query, config, opts) do
     case run(query, config[:schema], config[:pipeline], opts) do
