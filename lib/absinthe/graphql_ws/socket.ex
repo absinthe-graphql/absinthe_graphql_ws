@@ -282,14 +282,15 @@ defmodule Absinthe.GraphqlWS.Socket do
       schema: schema
     }
 
-    socket = Socket.new(
-      absinthe: absinthe_config,
-      connect_info: socket.connect_info,
-      endpoint: socket.endpoint,
-      handler: module,
-      keepalive: keepalive,
-      pubsub: pubsub
-    )
+    socket =
+      Socket.new(
+        absinthe: absinthe_config,
+        connect_info: socket.connect_info,
+        endpoint: socket.endpoint,
+        handler: module,
+        keepalive: keepalive,
+        pubsub: pubsub
+      )
 
     debug("connect: #{socket}")
 
