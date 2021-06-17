@@ -32,6 +32,7 @@ defmodule Absinthe.GraphqlWS.Socket do
   """
 
   alias Absinthe.GraphqlWS.Socket
+  require Logger
 
   @default_keepalive 30_000
 
@@ -248,6 +249,8 @@ defmodule Absinthe.GraphqlWS.Socket do
     end
   end
 
+  defmacrop debug(msg), do: quote(do: Logger.debug("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
+
   @doc false
   def new(attrs \\ []), do: __struct__(attrs)
 
@@ -279,15 +282,18 @@ defmodule Absinthe.GraphqlWS.Socket do
       schema: schema
     }
 
-    {:ok,
-     Socket.new(
-       absinthe: absinthe_config,
-       connect_info: socket.connect_info,
-       endpoint: socket.endpoint,
-       handler: module,
-       keepalive: keepalive,
-       pubsub: pubsub
-     )}
+    socket = Socket.new(
+      absinthe: absinthe_config,
+      connect_info: socket.connect_info,
+      endpoint: socket.endpoint,
+      handler: module,
+      keepalive: keepalive,
+      pubsub: pubsub
+    )
+
+    debug("connect: #{socket}")
+
+    {:ok, socket}
   end
 
   @doc """
@@ -303,5 +309,17 @@ defmodule Absinthe.GraphqlWS.Socket do
   def absinthe_pipeline(schema, options) do
     schema
     |> Absinthe.Pipeline.for_document(options)
+  end
+
+  defimpl String.Chars do
+    def to_string(socket) do
+      handler = Module.split(socket.handler) |> Enum.join(".")
+      connect_info = Map.keys(socket.connect_info) |> inspect()
+      "#Socket<handler=#{handler}, connect_info=#{connect_info}, keepalive=#{keepalive(socket.keepalive)}>"
+    end
+
+    defp keepalive(0), do: "disabled"
+    defp keepalive(value) when value > 10_000, do: "#{value / 1000}s"
+    defp keepalive(value), do: "#{value}ms"
   end
 end

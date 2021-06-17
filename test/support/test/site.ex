@@ -172,7 +172,11 @@ defmodule Test.Site do
 
     socket @socket,
            Test.Site.GraphSocket,
-           websocket: [path: "", subprotocols: ["graphql-transport-ws"]]
+           websocket: [
+             connect_info: [:peer_data, :trace_context_headers, :x_headers, :uri, :user_agent],
+             path: "",
+             subprotocols: ["graphql-transport-ws"]
+           ]
 
     plug(Plug.Head)
     plug(Test.Site.Router)

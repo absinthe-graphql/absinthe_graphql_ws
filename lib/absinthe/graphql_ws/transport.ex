@@ -24,6 +24,9 @@ defmodule Absinthe.GraphqlWS.Transport do
   @type reply_message() :: Socket.reply_message()
   @type socket() :: Socket.t()
 
+  defmacrop debug(msg), do: quote(do: Logger.debug("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
+  defmacrop warn(msg), do: quote(do: Logger.warn("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
+
   @doc """
   Generally this will only receive `:pong` messages in response to our keepalive
   ping messages. Client-side websocket libraries handle these control frames
@@ -265,7 +268,4 @@ defmodule Absinthe.GraphqlWS.Transport do
   end
 
   defp queue_complete_message(id), do: send(self(), {:complete, id})
-
-  defp debug(msg), do: Logger.debug("[graph-socket@#{inspect(self())}] #{msg}")
-  defp warn(msg), do: Logger.warn("[graph-socket@#{inspect(self())}] #{msg}")
 end
