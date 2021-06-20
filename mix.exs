@@ -12,7 +12,7 @@ defmodule AbsintheGraphqlWS.MixProject do
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       homepage_url: "https://github.com/geometerio/absinthe_graphql_ws",
-      name: "AbsintehGrahqlWS",
+      name: "AbsintheGrahqlWS",
       package: package(),
       preferred_cli_env: [credo: :test, dialyzer: :test],
       source_url: "https://github.com/geometerio/absinthe_graphql_ws",
