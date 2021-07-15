@@ -235,9 +235,9 @@ defmodule Absinthe.GraphqlWS.Transport do
         socket = merge_opts(socket, context: context)
         {:reply, :ok, {:text, Message.Next.new(id, reply)}, socket}
 
-      {:ok, %{errors: _} = reply, context} ->
+      {:ok, %{errors: errors}, context} ->
         socket = merge_opts(socket, context: context)
-        {:reply, :ok, {:text, Message.Error.new(id, reply)}, socket}
+        {:reply, :ok, {:text, Message.Error.new(id, errors)}, socket}
 
       {:error, reply} ->
         {:reply, :error, {:text, Message.Error.new(id, reply)}, socket}
