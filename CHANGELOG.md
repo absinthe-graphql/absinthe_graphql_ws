@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+- Fix error payloads to handle error array from Absinthe [pull/2](https://github.com/geometerio/absinthe_graphql_ws/pull/2)
+
 ## 0.2.1
 
 - Logger statements use macros, so that inspect calls only execute when the log level is set
