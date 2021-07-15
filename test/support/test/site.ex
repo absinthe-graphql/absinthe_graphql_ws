@@ -81,6 +81,12 @@ defmodule Test.Site do
         resolve(&Resolvers.changes_subscription/3)
       end
 
+      field :handle_error, :thing do
+        config(fn _, _ ->
+          {:error, "subscribe error"}
+        end)
+      end
+
       field :handle_message, :boolean do
         arg(:subscription_param, :string)
 

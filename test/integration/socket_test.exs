@@ -262,6 +262,35 @@ defmodule Absinthe.GraphqlWS.SocketTest do
       Absinthe.Subscription.publish(Test.Site.Endpoint, %{name: "true"}, thing_changes: "2")
       assert {:ok, []} = Test.Client.get_new_replies(client)
     end
+
+    test "correct error payload for subscription failure", %{client: client} do
+      id = "subscription-with-error"
+
+      :ok =
+        Test.Client.push(client, %{
+          id: id,
+          type: "subscribe",
+          payload: %{
+            query: """
+            subscription HandleError {
+              handleError {
+                id
+                name
+              }
+            }
+            """
+          }
+        })
+
+      assert_json_received(
+        client,
+        %{
+          "id" => "subscription-with-error",
+          "payload" => [%{"locations" => [%{"column" => 3, "line" => 2}], "message" => "subscribe error"}],
+          "type" => "error"
+        }
+      )
+    end
   end
 
   describe "handle_message callbacks" do
