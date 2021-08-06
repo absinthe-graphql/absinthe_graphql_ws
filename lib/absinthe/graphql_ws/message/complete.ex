@@ -5,7 +5,9 @@ defmodule Absinthe.GraphqlWS.Message.Complete do
   message, no Complete message will be emitted.
   """
 
+  alias Absinthe.GraphqlWS.Util
+
   def new(id, payload \\ %{}) do
-    Jason.encode!(%{id: id, type: "complete", payload: payload})
+    Util.json_library().encode!(%{id: id, type: "complete", payload: payload})
   end
 end

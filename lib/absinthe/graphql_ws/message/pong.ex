@@ -3,7 +3,9 @@ defmodule Absinthe.GraphqlWS.Message.Pong do
   Reply to a Ping message.
   """
 
+  alias Absinthe.GraphqlWS.Util
+
   def new(payload \\ %{}) do
-    Jason.encode!(%{type: "pong", payload: payload})
+    Util.json_library().encode!(%{type: "pong", payload: payload})
   end
 end

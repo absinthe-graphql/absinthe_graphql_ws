@@ -5,7 +5,9 @@ defmodule Absinthe.GraphqlWS.Message.Next do
   will follow indicating stream completion.
   """
 
+  alias Absinthe.GraphqlWS.Util
+
   def new(id, payload \\ %{}) do
-    Jason.encode!(%{id: id, type: "next", payload: payload})
+    Util.json_library().encode!(%{id: id, type: "next", payload: payload})
   end
 end

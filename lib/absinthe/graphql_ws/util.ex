@@ -62,4 +62,9 @@ defmodule Absinthe.GraphqlWS.Util do
     absinthe = %{socket.absinthe | opts: opts}
     %{socket | absinthe: absinthe}
   end
+
+  @doc """
+  Retrieves the JSON library module used to encode and decode transport messages
+  """
+  def json_library, do: Application.get_env(:absinthe_graphql_ws, :json_library)
 end
