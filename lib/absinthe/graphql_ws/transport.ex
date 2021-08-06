@@ -11,8 +11,7 @@ defmodule Absinthe.GraphqlWS.Transport do
   their codebase, but is documented to help understand the intentions of the code.
   """
 
-  alias Absinthe.GraphqlWS.Message
-  alias Absinthe.GraphqlWS.Socket
+  alias Absinthe.GraphqlWS.{Message, Socket, Util}
   alias Phoenix.Socket.Broadcast
   require Logger
 
@@ -48,7 +47,7 @@ defmodule Absinthe.GraphqlWS.Transport do
   """
   @spec handle_in({binary(), [opcode: :text]}, socket()) :: reply_inbound()
   def handle_in({text, [opcode: :text]}, socket) do
-    Jason.decode(text)
+    Util.json_library().decode(text)
     |> case do
       {:ok, json} ->
         handle_inbound(json, socket)
