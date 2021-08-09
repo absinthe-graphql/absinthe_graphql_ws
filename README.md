@@ -8,8 +8,8 @@ See the [hex docs](https://hexdocs.pm/absinthe_graphql_ws) for more information.
 
 ## References
 
-* https://github.com/enisdenjo/graphql-ws
-* This project is heavily inspired by [subscriptions-transport-ws](https://github.com/maartenvanvliet/subscriptions-transport-ws)
+- https://github.com/enisdenjo/graphql-ws
+- This project is heavily inspired by [subscriptions-transport-ws](https://github.com/maartenvanvliet/subscriptions-transport-ws)
 
 ## Installation
 
@@ -23,7 +23,11 @@ def deps do
 end
 ```
 
+## Benchmarks
+
+Benchmarks live in the `benchmarks` directory, and can be run with `MIX_ENV=bench mix run benchmarks/<file>`.
+
 ## Contributing
 
-* Pull requests that may be rebased are preferrable to merges or squashes.
-* Please **do not** increment the version number in pull requests.
+- Pull requests that may be rebased are preferrable to merges or squashes.
+- Please **do not** increment the version number in pull requests.

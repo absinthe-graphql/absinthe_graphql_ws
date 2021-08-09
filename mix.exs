@@ -31,9 +31,11 @@ defmodule AbsintheGraphqlWS.MixProject do
     [
       {:absinthe, "~> 1.6"},
       {:absinthe_phoenix, "> 0.0.0"},
+      {:benchee, "> 0.0.0", only: [:bench]},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:cowlib, "~> 2.8", only: :test, override: true},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:eljiffy, "> 0.0.0", only: [:bench]},
       {:ex_doc, "~> 0.24", only: :dev, runtime: false},
       {:gun, "~> 1.3", only: [:test]},
       {:jason, "~> 1.2"},
@@ -45,7 +47,7 @@ defmodule AbsintheGraphqlWS.MixProject do
 
   defp dialyzer do
     [
-      plt_add_apps: [:ex_unit, :mix],
+      plt_add_apps: [:ex_unit, :mix, :jason],
       plt_add_deps: :app_tree,
       plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
     ]
@@ -56,6 +58,7 @@ defmodule AbsintheGraphqlWS.MixProject do
       extras: [
         "guides/overview.md",
         "guides/installation.md",
+        "guides/benchmarks.md",
         "guides/changelog.md",
         "README.md"
       ],
