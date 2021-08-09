@@ -38,7 +38,7 @@ defmodule AbsintheGraphqlWS.MixProject do
       {:eljiffy, "> 0.0.0", only: [:bench]},
       {:ex_doc, "~> 0.24", only: :dev, runtime: false},
       {:gun, "~> 1.3", only: [:test]},
-      {:jason, "~> 1.2"},
+      {:jason, "~> 1.2", optional: true},
       {:mix_audit, "~> 0.1", only: [:dev, :test], runtime: false},
       {:phoenix, "~> 1.5"},
       {:plug_cowboy, "~> 2.5", only: :test, override: true}

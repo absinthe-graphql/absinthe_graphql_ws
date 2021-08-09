@@ -7,6 +7,7 @@ def deps do
   [
     {:absinthe, "~> 1.6"},
     {:absinthe_graphql_ws, github: "geometerio/absinteh_graphql_ws"},
+    {:jason, "~> 1.2"}, # or compatible JSON library
     {:phoenix, "~> 1.5"}
     # ...
   ]
