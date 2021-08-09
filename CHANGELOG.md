@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+
+- Allow configuration of alternate JSON encoder/decoder [pull/3](https://github.com/geometerio/absinthe_graphql_ws/pull/3)
+
 ## 0.2.2
 
 - Fix error payloads to handle error array from Absinthe [pull/2](https://github.com/geometerio/absinthe_graphql_ws/pull/2)
@@ -9,8 +13,7 @@
 - Logger statements use macros, so that inspect calls only execute when the log level is set
   to print the statement.
 - Removes redundant `:queue_exit` message, since Cowboy already closes WebSocket processes when
- `{:close, code, reason}` is sent to a client.
-
+  `{:close, code, reason}` is sent to a client.
 
 ## 0.2.0
 
@@ -21,11 +24,9 @@
   - `4400` - Client sends a `Subscribe` message before `ConnectionInit`.
   - `4400` - Client sends an unexpected message.
 
-
 ## 0.1.1
 
 - Fix incorrect `@spec` on `c:Absinthe.GraphqlWS.Socket.handle_message/2`.
-
 
 ## 0.1.0
 
