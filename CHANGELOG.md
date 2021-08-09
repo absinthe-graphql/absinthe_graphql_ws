@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.3.0
+## 0.3.1
 
-- Allow configuration of alternate JSON encoder/decoder [pull/3](https://github.com/geometerio/absinthe_graphql_ws/pull/3)
+- Allow configuration of alternate JSON encoder/decoder [pull/3](https://github.com/geometerio/absinthe_graphql_ws/pull/3).
+- `Jason` is an optional dependency, so must be declared explicitly in the deps of a parent application.
 
 ## 0.2.2
 
