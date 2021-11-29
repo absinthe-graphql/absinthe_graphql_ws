@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2
+
+- Bug fix: transient task started in the socket uses a name that will not conflict with
+  Task.
+
 ## 0.3.1
 
 - Allow configuration of alternate JSON encoder/decoder [pull/3](https://github.com/geometerio/absinthe_graphql_ws/pull/3).
