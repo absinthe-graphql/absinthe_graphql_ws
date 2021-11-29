@@ -258,8 +258,8 @@ defmodule Absinthe.GraphqlWS.Socket do
   Provides a stub implementation that allows the socket to start. Phoenix.Socket.Transport
   expects a child spec that starts a process; we do so with a noop Task.
   """
-  def __child_spec__(_module, _opts, _socket_opts) do
-    %{id: Task, start: {Task, :start_link, [fn -> :ok end]}, restart: :transient}
+  def __child_spec__(module, _opts, _socket_opts) do
+    %{id: {__MODULE__, module}, start: {Task, :start_link, [fn -> :ok end]}, restart: :transient}
   end
 
   @doc """
