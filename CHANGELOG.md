@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3
+
+- Documentation fix.
+
 ## 0.3.2
 
 - Bug fix: transient task started in the socket uses a name that will not conflict with
