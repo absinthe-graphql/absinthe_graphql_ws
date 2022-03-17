@@ -18,7 +18,7 @@ Add `absinthe_graphql_ws` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:absinthe_graphql_ws, "~> 0.1"}
+    {:absinthe_graphql_ws, "~> 0.3"}
   ]
 end
 ```
