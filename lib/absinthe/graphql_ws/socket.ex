@@ -162,12 +162,17 @@ defmodule Absinthe.GraphqlWS.Socket do
   This can be used for custom authentication/authorization, using
   `Absinthe.GraphqlWS.Util.assign_context/2` to modify the Absinthe context.
 
+  In case the user is authenticated through session cookies, the session data may be accessed in
+  the socket's `:connect_info` field. Note that you need to send a `_csrf_token` param in the URL to effectively receive
+  the session info (or else the session will be `nil`). For more information, visit the Phoenix Endpoint docs:
+  https://hexdocs.pm/phoenix/Phoenix.Endpoint.html#socket/3-common-configuration
+
   ## Example
 
       defmodule MySocket do
         use Absinthe.GraphqlWS.Socket, schema: MySchema
 
-        def handle_init(%{"user_id" => user_id}) do
+        def handle_init(%{"user_id" => user_id}, socket) do
           case find_user(user_id) do
             nil ->
               {:error, %{}, socket}
