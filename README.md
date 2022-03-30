@@ -91,12 +91,21 @@ defmodule ExampleWeb.ApiClient do
     }
   }
   """
+  # handler is a pid for a process that implements `handle_info/4` as below
   def thing_changes(client, thing_id: thing_id, handler: handler) do
     Client.subscribe(client, @gql, %{thingId: thing_id}, handler)
   end
 end
 ```
 
+An example of handle_info 
+```elixir
+  @impl true
+  def handle_info({:subscription, _id, %{"data" => %{"thingChanges" => thing_changes}}}, %{assigns: %{thing: thing}} = socket) do
+    changes = thing_changes |> Enum.find(&(&1["id"] == thing.id)) 
+    socket |> do_cool_update(changes["things"]) |> noreply()
+  end
+```
 
 
 ## Benchmarks
