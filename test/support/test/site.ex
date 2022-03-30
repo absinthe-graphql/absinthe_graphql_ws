@@ -205,4 +205,6 @@ defmodule Test.Site do
       }
     end
   end
+
+  def socket_url, do: Router.Helpers.url(Endpoint) |> URI.merge("/graphql") |> URI.to_string()
 end

@@ -1,7 +1,7 @@
 defmodule AbsintheGraphqlWS.MixProject do
   use Mix.Project
 
-  @version "0.3.3"
+  @version "0.3.4"
   def project do
     [
       app: :absinthe_graphql_ws,
@@ -41,7 +41,8 @@ defmodule AbsintheGraphqlWS.MixProject do
       {:jason, "~> 1.2", optional: true},
       {:mix_audit, "~> 0.1", only: [:dev, :test], runtime: false},
       {:phoenix, "~> 1.5"},
-      {:plug_cowboy, "~> 2.5", only: :test, override: true}
+      {:plug_cowboy, "~> 2.5", only: :test, override: true},
+      {:uuid, "~> 1.1"}
     ]
   end
 

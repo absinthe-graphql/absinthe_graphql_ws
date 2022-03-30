@@ -156,7 +156,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
           type: "subscribe",
           payload: %{
             query: """
-            mutation ChangeThing($id: Integer! $name: String!) {
+            mutation ChangeThing($id: Int! $name: String!) {
               change_thing(id: $id, name: $name) {
                 id
                 name
@@ -197,7 +197,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
           type: "subscribe",
           payload: %{
             query: """
-            subscription ThingChanges($id: Integer!) {
+            subscription ThingChanges($id: Int!) {
               thing_changes(id: $id) {
                 id
                 name
@@ -234,7 +234,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
           type: "subscribe",
           payload: %{
             query: """
-            subscription ThingChanges($id: Integer!) {
+            subscription ThingChanges($id: Int!) {
               thing_changes(id: $id) {
                 id
                 name
