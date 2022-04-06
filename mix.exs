@@ -42,7 +42,7 @@ defmodule AbsintheGraphqlWS.MixProject do
       {:mix_audit, "~> 0.1", only: [:dev, :test], runtime: false},
       {:phoenix, "~> 1.5"},
       {:plug_cowboy, "~> 2.5", only: :test, override: true},
-      {:uuid, "~> 1.1"}
+      {:elixir_uuid, "~> 1.2"}
     ]
   end
 
