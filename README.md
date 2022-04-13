@@ -98,11 +98,12 @@ defmodule ExampleWeb.ApiClient do
 end
 ```
 
-An example of handle_info 
+An example of handle_info
+
 ```elixir
   @impl true
   def handle_info({:subscription, _id, %{"data" => %{"thingChanges" => thing_changes}}}, %{assigns: %{thing: thing}} = socket) do
-    changes = thing_changes |> Enum.find(&(&1["id"] == thing.id)) 
+    changes = thing_changes |> Enum.find(&(&1["id"] == thing.id))
     socket |> do_cool_update(changes["things"]) |> noreply()
   end
 ```
