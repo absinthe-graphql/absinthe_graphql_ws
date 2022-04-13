@@ -1,5 +1,15 @@
 # Changelog
 
+## Unpublished
+
+- Update `uuid` library -> `elixir_uuid`
+- Fix `c:Absinthe.GraphqlWS.Socket.handle_init/2` docs
+- Add examples to README
+
+## 0.3.4
+
+- Add `Absinthe.GraphqlWS.Client`
+
 ## 0.3.3
 
 - Documentation fix.
