@@ -35,14 +35,14 @@ defmodule AbsintheGraphqlWS.MixProject do
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:cowlib, "~> 2.8", only: :test, override: true},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:ecto, "~> 3.8"},
       {:eljiffy, "> 0.0.0", only: [:bench]},
       {:ex_doc, "~> 0.24", only: :dev, runtime: false},
       {:gun, "~> 1.3", only: [:test]},
       {:jason, "~> 1.2", optional: true},
       {:mix_audit, "~> 0.1", only: [:dev, :test], runtime: false},
       {:phoenix, "~> 1.5"},
-      {:plug_cowboy, "~> 2.5", only: :test, override: true},
-      {:elixir_uuid, "~> 1.2"}
+      {:plug_cowboy, "~> 2.5", only: :test, override: true}
     ]
   end
 

@@ -56,7 +56,7 @@ defmodule Absinthe.GraphqlWS.Client do
   end
 
   def handle_call({:query, gql, variables}, from, state) do
-    id = UUID.uuid4()
+    id = Ecto.UUID.generate()
 
     send_and_cache(id, from, make_message(id, gql, variables), state)
   end
@@ -68,7 +68,7 @@ defmodule Absinthe.GraphqlWS.Client do
   end
 
   def handle_call({:subscribe, gql, variables, handler}, _from, %{listeners: listeners} = state) do
-    id = UUID.uuid4()
+    id = Ecto.UUID.generate()
 
     state.transport.ws_send(state.gun, {:text, Jason.encode!(make_message(id, gql, variables))})
     listeners = Map.put(listeners, id, handler)
