@@ -2,6 +2,8 @@
 
 ## Unpublished
 
+## 0.3.6
+
 - Update development dependencies
 - Update Elixir, Erlang versions for development
 - Use internal module for UUID generation, based on `ecto`'s implementation
