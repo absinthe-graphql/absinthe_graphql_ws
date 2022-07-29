@@ -23,7 +23,7 @@ defmodule AbsintheGraphqlWS.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:crypto, :logger]
     ]
   end
 
@@ -35,7 +35,6 @@ defmodule AbsintheGraphqlWS.MixProject do
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:cowlib, "~> 2.8", only: :test, override: true},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:ecto, "~> 3.8"},
       {:eljiffy, "> 0.0.0", only: [:bench]},
       {:ex_doc, "~> 0.24", only: :dev, runtime: false},
       {:gun, "~> 1.3", only: [:test]},
@@ -92,7 +91,7 @@ defmodule AbsintheGraphqlWS.MixProject do
 
   defp package do
     [
-      licenses: ["MIT"],
+      licenses: ["MIT", "Apache-2.0"],
       maintainers: ["Geometer"],
       links: %{"GitHub" => "https://github.com/geometerio/absinthe_graphql_ws"}
     ]

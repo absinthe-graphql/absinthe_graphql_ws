@@ -1,5 +1,6 @@
 defmodule Absinthe.GraphqlWS.Client do
   use GenServer
+  alias Absinthe.GraphqlWS.Uuid
   require Logger
 
   defstruct [
@@ -56,7 +57,7 @@ defmodule Absinthe.GraphqlWS.Client do
   end
 
   def handle_call({:query, gql, variables}, from, state) do
-    id = Ecto.UUID.generate()
+    id = Uuid.generate()
 
     send_and_cache(id, from, make_message(id, gql, variables), state)
   end
@@ -68,7 +69,7 @@ defmodule Absinthe.GraphqlWS.Client do
   end
 
   def handle_call({:subscribe, gql, variables, handler}, _from, %{listeners: listeners} = state) do
-    id = Ecto.UUID.generate()
+    id = Uuid.generate()
 
     state.transport.ws_send(state.gun, {:text, Jason.encode!(make_message(id, gql, variables))})
     listeners = Map.put(listeners, id, handler)
