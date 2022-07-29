@@ -8,9 +8,12 @@ on:
   pull_request:
     branches:
       - main
+env:
+  ELIXIR_VERSION: "1.12.3"
+  OTP_VERSION: "24.1.7"
 jobs:
-  build:
-    name: Build
+  build_test:
+    name: Build Test
     runs-on: ubuntu-20.04
     env:
       MIX_ENV: test
@@ -19,27 +22,55 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.12.3"
-          otp-version: "24.1.7"
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
       - name: Cache deps
         uses: actions/cache@v2
         with:
           path: deps
-          key: ${{ runner.os }}-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+          key: ${{ runner.os }}-test-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
       - name: Cache _build
         uses: actions/cache@v2
         with:
           path: _build
-          key: ${{ runner.os }}-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+          key: ${{ runner.os }}-test-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
       - name: Install dependencies
         run: mix deps.get
         working-directory: .
       - name: Compile for test
-        run: mix compile
+        run: mix compile --force --warnings-as-errors
+        working-directory: .
+  build_dev:
+    name: Build Dev
+    runs-on: ubuntu-20.04
+    env:
+      MIX_ENV: dev
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+      - name: Cache deps
+        uses: actions/cache@v2
+        with:
+          path: deps
+          key: ${{ runner.os }}-dev-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Cache _build
+        uses: actions/cache@v2
+        with:
+          path: _build
+          key: ${{ runner.os }}-dev-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Install dependencies
+        run: mix deps.get
+        working-directory: .
+      - name: Compile for dev
+        run: mix compile --force --warnings-as-errors
         working-directory: .
   test:
     name: Test
-    needs: build
+    needs: build_test
     runs-on: ubuntu-20.04
     env:
       MIX_ENV: test
@@ -48,30 +79,24 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.12.3"
-          otp-version: "24.1.7"
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
       - name: Cache deps
         uses: actions/cache@v2
         with:
           path: deps
-          key: ${{ runner.os }}-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+          key: ${{ runner.os }}-test-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
       - name: Cache _build
         uses: actions/cache@v2
         with:
           path: _build
-          key: ${{ runner.os }}-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+          key: ${{ runner.os }}-test-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
       - name: Run tests
-        run: mix test --color --cover
+        run: mix test --color --warnings-as-errors
         working-directory: .
-      - name: Run mix audit
-        run: mix deps.audit
-        working-directory: .
-      - name: Warnings as errors
-        run: mix compile --force --warnings-as-errors
-        working-directory: .
-  linter:
+  credo_and_dialyxir:
     name: Credo + Dialyxir
-    needs: build
+    needs: build_test
     runs-on: ubuntu-20.04
     env:
       MIX_ENV: test
@@ -80,53 +105,88 @@ jobs:
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.12.3"
-          otp-version: "24.1.7"
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
       - name: Cache deps
         uses: actions/cache@v2
         with:
           path: deps
-          key: ${{ runner.os }}-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+          key: ${{ runner.os }}-test-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
       - name: Cache _build
         uses: actions/cache@v2
         with:
           path: _build
-          key: ${{ runner.os }}-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+          key: ${{ runner.os }}-test-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
       - name: Cache PLTs
         uses: actions/cache@v2
         with:
           path: priv/plts
-          key: ${{ runner.os }}-dialyxir-v2-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+          key: ${{ runner.os }}-test-dialyxir-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
       - name: Credo
         run: mix credo --strict
         working-directory: .
       - name: Run dialyzer
         run: mix dialyzer
         working-directory: .
-      - name: Check formatting
+  audit:
+    name: Audit
+    needs: build_dev
+    runs-on: ubuntu-20.04
+    env:
+      MIX_ENV: dev
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+      - name: Cache deps
+        uses: actions/cache@v2
+        with:
+          path: deps
+          key: ${{ runner.os }}-dev-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Cache _build
+        uses: actions/cache@v2
+        with:
+          path: _build
+          key: ${{ runner.os }}-dev-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Check Elixir formatting
         run: mix format --check-formatted
+        working-directory: .
+      - name: Check for unused dependencies
+        run: mix deps.unlock --check-unused
+        working-directory: .
+      - name: Audit deps
+        run: mix deps.audit
         working-directory: .
   publish:
     name: Publish to Hex
     if: github.ref == 'refs/heads/main'
     needs:
       - test
-      - linter
+      - credo_and_dialyxir
+      - audit
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.12.3"
-          otp-version: "24.1.7"
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
       - name: Cache deps
         uses: actions/cache@v2
         with:
           path: deps
-          key: ${{ runner.os }}-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
-      - name: Publish
-        uses: ./.github/publish
+          key: ${{ runner.os }}-dev-deps-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Cache _build
+        uses: actions/cache@v2
+        with:
+          path: _build
+          key: ${{ runner.os }}-dev-build-v1-${{ hashFiles('**/mix.lock', '.tool-versions') }}
+      - name: Publish to Hex
+        uses: synchronal/hex-publish-action@v1
         with:
           name: absinthe_graphql_ws
           key: ${{ secrets.HEX_PM_KEY }}
