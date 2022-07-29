@@ -2,6 +2,10 @@
 
 ## Unpublished
 
+- Update development dependencies
+- Update Elixir, Erlang versions for development
+- Use internal module for UUID generation, based on `ecto`'s implementation
+
 ## 0.3.5
 
 - Update `uuid` library -> `elixir_uuid`
