@@ -1,8 +1,8 @@
 # AbsintheGraphqlWS
 
-Adds a websocket transport for the
-[GraphQL over WebSocket Protocol](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md)
-to Absinthe running in Phoenix.
+Adds a websocket transport for the [GraphQL over WebSocket
+Protocol](https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md) to Absinthe running in
+Phoenix.
 
 See the [hex docs](https://hexdocs.pm/absinthe_graphql_ws) for more information.
 
@@ -108,10 +108,10 @@ An example of handle_info
   end
 ```
 
-
 ## Benchmarks
 
-Benchmarks live in the `benchmarks` directory, and can be run with `MIX_ENV=bench mix run benchmarks/<file>`.
+Benchmarks live in the `benchmarks` directory, and can be run with `MIX_ENV=bench mix run
+benchmarks/<file>`.
 
 ## Contributing
 

@@ -18,13 +18,14 @@
 
 ## 0.3.2
 
-- Bug fix: transient task started in the socket uses a name that will not conflict with
-  Task.
+- Bug fix: transient task started in the socket uses a name that will not conflict with Task.
 
 ## 0.3.1
 
-- Allow configuration of alternate JSON encoder/decoder [pull/3](https://github.com/geometerio/absinthe_graphql_ws/pull/3).
-- `Jason` is an optional dependency, so must be declared explicitly in the deps of a parent application.
+- Allow configuration of alternate JSON encoder/decoder
+  [pull/3](https://github.com/geometerio/absinthe_graphql_ws/pull/3).
+- `Jason` is an optional dependency, so must be declared explicitly in the deps of a parent
+  application.
 
 ## 0.2.2
 
@@ -32,8 +33,8 @@
 
 ## 0.2.1
 
-- Logger statements use macros, so that inspect calls only execute when the log level is set
-  to print the statement.
+- Logger statements use macros, so that inspect calls only execute when the log level is set to print
+  the statement.
 - Removes redundant `:queue_exit` message, since Cowboy already closes WebSocket processes when
   `{:close, code, reason}` is sent to a client.
 
