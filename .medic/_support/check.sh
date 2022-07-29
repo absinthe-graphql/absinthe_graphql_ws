@@ -41,7 +41,7 @@ check() {
     cecho --cyan "Possible remedy: " --yellow "${remedy}"
     cecho --cyan "(it's in the clipboard)"
     localcopy "$remedy"
-    exit 1
+    exit $command_exit_status
   fi
 }
 

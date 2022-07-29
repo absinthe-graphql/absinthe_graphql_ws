@@ -10,13 +10,14 @@ step() {
 
   step_header "${description}" "${command}"
   output=$(eval "${command}" 2>&1)
+  status_code=$?
 
-  if [ $? -eq 0 ]; then
+  if [ $status_code -eq 0 ]; then
     cecho --bold-bright-green "OK"
   else
     cecho --red "FAILED"
-    cecho --red $output
-    exit
+    echo -e "${output}"
+    exit $status_code
   fi
 }
 

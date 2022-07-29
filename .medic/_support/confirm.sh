@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-source "bin/_support/cecho.sh"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source "${DIR}/cecho.sh"
 
 confirm() {
   description=$1

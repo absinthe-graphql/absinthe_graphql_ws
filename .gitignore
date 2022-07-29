@@ -1,6 +1,8 @@
 *.ez
-/_build/
+.medic/.doctor.out
+.medic/skipped
 /.fetch
+/_build/
 /cover/
 /deps/
 /doc/
@@ -8,6 +10,3 @@
 /tmp/
 absinthe_graphql_ws-*.tar
 erl_crash.dump
-
-.medic/skipped
-.medic/.doctor.out
