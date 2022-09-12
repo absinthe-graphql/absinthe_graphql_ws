@@ -77,6 +77,15 @@ defmodule Absinthe.GraphqlWS.SocketTest do
         "type" => "pong"
       })
     end
+
+    test "replies with same payload as Ping", %{client: client} do
+      :ok = Test.Client.push(client, %{type: "ping", payload: %{"hello" => "world"}})
+
+      assert_json_received(client, %{
+        "payload" => %{"hello" => "world"},
+        "type" => "pong"
+      })
+    end
   end
 
   describe "on message receipt that does not follow the spec" do
@@ -319,6 +328,25 @@ defmodule Absinthe.GraphqlWS.SocketTest do
 
       assert_receive({:subscription, %{}} = reply)
       assert reply == {:subscription, %{subscription_param: "boo"}}
+    end
+  end
+
+  describe "handle_ping callbacks" do
+    setup [:setup_client, :send_connection_init]
+
+    test "are called when the socket receives a ping", %{client: client} do
+      Test.Site.TestPubSub.subscribe(:handle_ping_callback)
+
+      :ok =
+        Test.Client.push(client, %{
+          type: "ping",
+          payload: %{
+            foo: "bar"
+          }
+        })
+
+      assert_receive({:ping, %{}} = reply)
+      assert reply == {:ping, %{"foo" => "bar"}}
     end
   end
 end

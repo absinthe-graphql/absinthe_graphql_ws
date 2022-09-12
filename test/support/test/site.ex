@@ -14,6 +14,12 @@ defmodule Test.Site do
       Test.Site.TestPubSub.notify(:handle_message_callback, {:subscription, params})
       {:ok, socket}
     end
+
+    @impl Absinthe.GraphqlWS.Socket
+    def handle_ping(payload, socket) do
+      Test.Site.TestPubSub.notify(:handle_ping_callback, {:ping, payload})
+      {:ok, socket}
+    end
   end
 
   defmodule Resolvers do
