@@ -185,7 +185,29 @@ defmodule Absinthe.GraphqlWS.Socket do
   """
   @callback handle_init(payload :: map(), socket()) :: Socket.init()
 
-  @optional_callbacks handle_message: 2, handle_init: 2
+  @doc """
+  Handle a `ping` message sent by the socket client. This will receive the
+  `payload` from the message, defaulting to an empty map.
+
+  This can be useful for monitoring connections and network metrics.
+
+  It must return `{:ok, socket}`, as the protocol spec requires a Pong message
+  must be sent in reply to a Ping as soon as possible.
+
+  ## Example
+
+      defmodule MySocket do
+        use Absinthe.GraphqlWS.Socket, schema: MySchema
+
+        def handle_ping(%{"hello" => "world"}, socket) do
+          socket = assign(socket, :last_ping, :os.system_time(:seconds))
+          {:ok, socket}
+        end
+      end
+  """
+  @callback handle_ping(payload :: map(), socket()) :: {:ok, socket()}
+
+  @optional_callbacks handle_message: 2, handle_init: 2, handle_ping: 2
 
   @spec __after_compile__(any(), any()) :: :ok
   def __after_compile__(env, _bytecode) do
