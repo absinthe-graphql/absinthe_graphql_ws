@@ -126,8 +126,11 @@ defmodule Absinthe.GraphqlWS.Transport do
         {:ok, payload, socket} ->
           {:reply, :ok, {:text, Message.ConnectionAck.new(payload)}, %{socket | initialized?: true}}
 
-        {:error, payload, socket} ->
-          {:reply, :ok, {:text, Message.Error.new(payload)}, socket}
+          {:error, socket} ->
+            close(4403, "Forbidden", socket)
+
+          {:error, message, socket} ->
+            close(4403, message, socket)
       end
     else
       {:reply, :ok, {:text, Message.ConnectionAck.new()}, %{socket | initialized?: true}}
