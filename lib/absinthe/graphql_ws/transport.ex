@@ -131,6 +131,9 @@ defmodule Absinthe.GraphqlWS.Transport do
 
         {:error, payload, socket} ->
           {:reply, :ok, {:text, Message.Error.new(Uuid.generate(), payload)}, socket}
+
+        {:close, {status, message}, socket} ->
+          close(status, message, socket)
       end
     else
       {:reply, :ok, {:text, Message.ConnectionAck.new()}, %{socket | initialized?: true}}
