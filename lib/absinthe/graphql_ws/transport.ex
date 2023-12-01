@@ -11,7 +11,7 @@ defmodule Absinthe.GraphqlWS.Transport do
   their codebase, but is documented to help understand the intentions of the code.
   """
 
-  alias Absinthe.GraphqlWS.{Message, Socket, Util, Uuid}
+  alias Absinthe.GraphqlWS.{Message, Socket, Util}
   alias Phoenix.Socket.Broadcast
   require Logger
 
@@ -126,8 +126,11 @@ defmodule Absinthe.GraphqlWS.Transport do
         {:ok, payload, socket} ->
           {:reply, :ok, {:text, Message.ConnectionAck.new(payload)}, %{socket | initialized?: true}}
 
+        {:error, {id, payload}, socket} ->
+          {:reply, :ok, {:text, Message.Error.new(id, payload)}, socket}
+
         {:error, payload, socket} ->
-          {:reply, :ok, {:text, Message.Error.new(Uuid.generate(), payload)}, socket}
+          {:reply, :ok, {:text, Message.Error.new(payload)}, socket}
       end
     else
       {:reply, :ok, {:text, Message.ConnectionAck.new()}, %{socket | initialized?: true}}
