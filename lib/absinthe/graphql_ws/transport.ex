@@ -34,7 +34,15 @@ defmodule Absinthe.GraphqlWS.Transport do
   """
   @spec handle_control({term(), opcode: control()}, socket()) :: reply_inbound()
   def handle_control({_, opcode: :ping}, socket), do: {:reply, :ok, {:pong, @pong}, socket}
-  def handle_control({_, opcode: :pong}, socket), do: {:ok, socket}
+
+  def handle_control({_, opcode: :pong}, socket) do
+    start = socket.assigns[:start]
+    measurements = %{duration: System.monotonic_time() - start}
+    metadata = %{}
+    :telemetry.execute([:absinthe_graphql_ws, :keepalive, :stop], measurements, metadata)
+
+    {:ok, socket}
+  end
 
   def handle_control(message, state) do
     warn(" unhandled control frame #{inspect(message)}")
@@ -80,6 +88,12 @@ defmodule Absinthe.GraphqlWS.Transport do
   @spec handle_info(term(), socket()) :: reply_message()
   def handle_info(:keepalive, socket) do
     Process.send_after(self(), :keepalive, socket.keepalive)
+    start = System.monotonic_time()
+    measurements = %{system_time: System.system_time()}
+    metadata = %{}
+    :telemetry.execute([:absinthe_graphql_ws, :keepalive, :start], measurements, metadata)
+
+    socket = Util.assign(socket, start: start)
     {:push, {:ping, @ping}, socket}
   end
 
