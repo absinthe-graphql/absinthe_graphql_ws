@@ -131,6 +131,15 @@ defmodule Absinthe.GraphqlWS.Transport do
   """
   @spec handle_inbound(map(), socket()) :: reply_inbound()
   def handle_inbound(%{"type" => "connection_init"}, %{initialized?: true} = socket) do
+    metadata = %{
+      code: 4429,
+      operation: :connection_init,
+      reason: :too_many_initialisation_requests,
+      platform: get_platform(socket)
+    }
+
+    :telemetry.execute([:absinthe_graphql_ws, :handle_inbound, :error], %{}, metadata)
+
     close(4429, "Too many initialisation requests", socket)
   end
 
@@ -149,6 +158,15 @@ defmodule Absinthe.GraphqlWS.Transport do
   end
 
   def handle_inbound(%{"type" => "subscribe"}, %{initialized?: false} = socket) do
+    metadata = %{
+      code: 4400,
+      operation: :subscribe,
+      reason: :subscribe_before_connection_init,
+      platform: get_platform(socket)
+    }
+
+    :telemetry.execute([:absinthe_graphql_ws, :handle_inbound, :error], %{}, metadata)
+
     close(4400, "Subscribe message received before ConnectionInit", socket)
   end
 
@@ -274,4 +292,6 @@ defmodule Absinthe.GraphqlWS.Transport do
   end
 
   defp queue_complete_message(id), do: send(self(), {:complete, id})
+
+  defp get_platform(socket), do: socket.assigns[:platform] || "unknown"
 end
