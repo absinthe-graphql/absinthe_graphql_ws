@@ -198,5 +198,5 @@ defmodule Absinthe.GraphqlWS.Client do
   end
 
   # defp debug(msg), do: Logger.debug("[client@#{inspect(self())}] #{msg}")
-  defp warn(msg), do: Logger.warn("[client@#{inspect(self())}] #{msg}")
+  defp warn(msg), do: Logger.warning("[client@#{inspect(self())}] #{msg}")
 end

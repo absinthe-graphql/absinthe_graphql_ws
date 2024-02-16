@@ -24,7 +24,7 @@ defmodule Absinthe.GraphqlWS.Transport do
   @type socket() :: Socket.t()
 
   defmacrop debug(msg), do: quote(do: Logger.debug("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
-  defmacrop warn(msg), do: quote(do: Logger.warn("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
+  defmacrop warn(msg), do: quote(do: Logger.warning("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
 
   @doc """
   Generally this will only receive `:pong` messages in response to our keepalive
