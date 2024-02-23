@@ -40,6 +40,7 @@ defmodule Absinthe.GraphqlWS.Transport do
     measurements = %{duration: System.monotonic_time() - start}
     metadata = %{}
     :telemetry.execute([:absinthe_graphql_ws, :keepalive, :stop], measurements, metadata)
+    socket = Util.assign(socket, last_inbound_pong: System.system_time())
 
     {:ok, socket}
   end
@@ -92,8 +93,8 @@ defmodule Absinthe.GraphqlWS.Transport do
     measurements = %{system_time: System.system_time()}
     metadata = %{}
     :telemetry.execute([:absinthe_graphql_ws, :keepalive, :start], measurements, metadata)
+    socket = Util.assign(socket, start: start, last_outbound_ping: System.system_time())
 
-    socket = Util.assign(socket, start: start)
     {:push, {:ping, @ping}, socket}
   end
 
@@ -197,8 +198,10 @@ defmodule Absinthe.GraphqlWS.Transport do
     end
   end
 
-  def handle_inbound(%{"type" => "ping"}, socket),
-    do: {:reply, :ok, {:text, Message.Pong.new()}, socket}
+  def handle_inbound(%{"type" => "ping"}, socket) do
+    socket = Util.assign(socket, last_inbound_ping: System.system_time())
+    {:reply, :ok, {:text, Message.Pong.new()}, socket}
+  end
 
   def handle_inbound(msg, socket) do
     warn("unhandled message #{inspect(msg)}")
