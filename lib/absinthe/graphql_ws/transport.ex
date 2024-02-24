@@ -102,7 +102,12 @@ defmodule Absinthe.GraphqlWS.Transport do
 
   def handle_info(%Broadcast{event: "subscription:data", payload: payload, topic: topic}, socket) do
     subscription_id = socket.subscriptions[topic]
-    {:push, {:text, Message.Next.new(subscription_id, payload.result)}, socket}
+    message = Message.Next.new(subscription_id, payload.result)
+    measurements = %{payload_size: String.length(message)}
+    metadata = %{platform: get_platform(socket)}
+    :telemetry.execute([:absinthe_graphql_ws, :handle_info, :broadcast], measurements, metadata)
+
+    {:push, {:text, message}, socket}
   end
 
   def handle_info({:complete, id}, socket) do
@@ -202,8 +207,13 @@ defmodule Absinthe.GraphqlWS.Transport do
 
   def handle_inbound(%{"type" => "ping"}, socket) do
     system_time = System.system_time()
+    message = Message.Pong.new()
+    measurements = %{payload_size: String.length(message)}
+    metadata = %{platform: get_platform(socket)}
+    :telemetry.execute([:absinthe_graphql_ws, :handle_inbound, :ping], measurements, metadata)
+
     socket = Util.assign(socket, last_inbound_ping: system_time, last_keepalive: system_time)
-    {:reply, :ok, {:text, Message.Pong.new()}, socket}
+    {:reply, :ok, {:text, message}, socket}
   end
 
   def handle_inbound(msg, socket) do
