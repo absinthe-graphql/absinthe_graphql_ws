@@ -104,7 +104,15 @@ defmodule Absinthe.GraphqlWS.Transport do
     subscription_id = socket.subscriptions[topic]
     message = Message.Next.new(subscription_id, payload.result)
     measurements = %{payload_size: byte_size(message)}
-    metadata = %{platform: get_platform(socket)}
+
+    metadata = %{
+      platform: get_platform(socket),
+      session_id: get_session_id(socket),
+      client_app_version: get_client_app_version(socket),
+      user_id: get_user_id(socket),
+      payload: payload
+    }
+
     :telemetry.execute([:absinthe_graphql_ws, :handle_info, :broadcast], measurements, metadata)
 
     {:push, {:text, message}, socket}
@@ -310,4 +318,10 @@ defmodule Absinthe.GraphqlWS.Transport do
   defp queue_complete_message(id), do: send(self(), {:complete, id})
 
   defp get_platform(socket), do: socket.assigns[:platform] || "unknown"
+
+  defp get_session_id(socket), do: socket.assigns[:session_id]
+
+  defp get_client_app_version(socket), do: socket.assigns[:client_app_version]
+
+  defp get_user_id(socket), do: socket.assigns[:user_id]
 end
