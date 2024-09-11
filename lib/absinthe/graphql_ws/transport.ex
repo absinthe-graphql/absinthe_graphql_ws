@@ -119,6 +119,15 @@ defmodule Absinthe.GraphqlWS.Transport do
   end
 
   def handle_info({:complete, id}, socket) do
+    metadata = %{
+      platform: get_platform(socket),
+      session_id: get_session_id(socket),
+      client_app_version: get_client_app_version(socket),
+      user_id: get_user_id(socket),
+    }
+
+    :telemetry.execute([:absinthe_graphql_ws, :handle_info, :complete], %{}, metadata)
+
     {:push, {:text, Message.Complete.new(id)}, socket}
   end
 
