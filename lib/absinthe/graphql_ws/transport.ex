@@ -201,10 +201,8 @@ defmodule Absinthe.GraphqlWS.Transport do
     end
   end
 
-  defp close(code, _message, socket) do
-    # This seems to crash the websocket handler.
-    # {:reply, :ok, {:close, code, message}, socket}
-    {:reply, :ok, {:close, code}, socket}
+  defp close(code, message, socket) do
+    {:stop, :normal, {code, message}, socket}
   end
 
   defp parse_query(%{"query" => query}) when is_binary(query), do: {:ok, query}
