@@ -17,7 +17,7 @@ end
 ## Configuration
 
 `absinthe_graphql_ws` defaults to using [Jason](https://hex.pm/packages/jason) for JSON encoding and
-decoding. This can be configured as follows:
+decoding. This can be configured to use a different JSON library as follows:
 
 ```elixir
 config :absinthe_graphql_ws, :json_library, MyJSONLibrary

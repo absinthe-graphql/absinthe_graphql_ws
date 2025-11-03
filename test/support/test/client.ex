@@ -1,5 +1,6 @@
 defmodule Test.Client do
   use GenServer
+  alias Absinthe.GraphqlWS.Util
   require Logger
 
   defstruct [
@@ -59,7 +60,7 @@ defmodule Test.Client do
   end
 
   def handle_call({:push, %{} = message}, _from, state) do
-    :gun.ws_send(state.gun, {:text, Jason.encode!(message)})
+    :gun.ws_send(state.gun, {:text, Util.json_library().encode!(message)})
     {:reply, :ok, state}
   end
 

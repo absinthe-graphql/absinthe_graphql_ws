@@ -1,5 +1,6 @@
 defmodule Absinthe.GraphqlWS.SocketTest do
   use ExUnit.Case
+  alias Absinthe.GraphqlWS.Util
 
   defp setup_client(_context) do
     assert {:ok, client} = Test.Client.start()
@@ -12,7 +13,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
 
     assert {:ok,
             [
-              {:text, Jason.encode!(%{"type" => "connection_ack", "payload" => %{}})}
+              {:text, Util.json_library().encode!(%{"type" => "connection_ack", "payload" => %{}})}
             ]} ==
              Test.Client.get_new_replies(client)
 
@@ -33,7 +34,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
 
   defp assert_json_received(client, payload) do
     assert {:ok, [{:text, json}]} = Test.Client.get_new_replies(client)
-    assert json == Jason.encode!(payload)
+    assert json == Util.json_library().encode!(payload)
   end
 
   describe "initalization" do

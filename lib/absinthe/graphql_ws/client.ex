@@ -1,6 +1,6 @@
 defmodule Absinthe.GraphqlWS.Client do
   use GenServer
-  alias Absinthe.GraphqlWS.Uuid
+  alias Absinthe.GraphqlWS.{Uuid, Util}
   require Logger
 
   defstruct [
@@ -71,7 +71,7 @@ defmodule Absinthe.GraphqlWS.Client do
   def handle_call({:subscribe, gql, variables, handler}, _from, %{listeners: listeners} = state) do
     id = Uuid.generate()
 
-    state.transport.ws_send(state.gun, {:text, Jason.encode!(make_message(id, gql, variables))})
+    state.transport.ws_send(state.gun, {:text, Util.json_library().encode!(make_message(id, gql, variables))})
     listeners = Map.put(listeners, id, handler)
     state = Map.put(state, :listeners, listeners)
     {:reply, {:ok, id}, state}
@@ -87,7 +87,7 @@ defmodule Absinthe.GraphqlWS.Client do
   end
 
   def handle_info({:gun_ws, _pid, _stream_ref, {:text, payload}}, state) do
-    message = Jason.decode!(payload)
+    message = Util.json_library().decode!(payload)
 
     new_listeners =
       case message do
@@ -168,7 +168,7 @@ defmodule Absinthe.GraphqlWS.Client do
 
   defp send_and_cache(id, from, message, %{queries: queries} = state) do
     # IO.inspect(message, label: "OUTBOUND")
-    state.transport.ws_send(state.gun, {:text, Jason.encode!(message)})
+    state.transport.ws_send(state.gun, {:text, Util.json_library().encode!(message)})
     queries = Map.put(queries, id, from)
     state = Map.put(state, :queries, queries)
     {:noreply, state}

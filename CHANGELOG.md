@@ -2,6 +2,9 @@
 
 ## Unpublished
 
+- Replace hardcoded Jason calls with configurable `Util.json_library()` for better flexibility
+- Library now uses configurable JSON encoder/decoder throughout codebase
+
 ## 0.3.6
 
 - Update development dependencies

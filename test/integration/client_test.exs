@@ -1,7 +1,7 @@
 defmodule Absinthe.GraphqlWS.ClientTest do
   # cannot run asynchronously because it makes http requests to the API
   use ExUnit.Case
-  alias Absinthe.GraphqlWS.Client
+  alias Absinthe.GraphqlWS.{Client, Util}
 
   defmodule FakeTransport do
     def ws_send(_pid, _message) do
@@ -83,7 +83,7 @@ defmodule Absinthe.GraphqlWS.ClientTest do
     end
 
     test "gun_ws handles completed requests and removes them from the query map", %{caller_pid: caller_pid} do
-      payload = Jason.encode!(%{id: "easy-message-id", type: "complete"})
+      payload = Util.json_library().encode!(%{id: "easy-message-id", type: "complete"})
       state = %{queries: %{"easy-message-id" => 500, "other-message-id" => 501}, listeners: %{}}
 
       assert(
@@ -93,7 +93,7 @@ defmodule Absinthe.GraphqlWS.ClientTest do
     end
 
     test "gun_ws handles completed subscription feeds and removes them from the listeners map", %{caller_pid: caller_pid} do
-      payload = Jason.encode!(%{id: "easy-message-id", type: "complete"})
+      payload = Util.json_library().encode!(%{id: "easy-message-id", type: "complete"})
       state = %{listeners: %{"easy-message-id" => 500, "other-message-id" => 501}, queries: %{}}
 
       assert(
@@ -106,7 +106,7 @@ defmodule Absinthe.GraphqlWS.ClientTest do
       message = %{"id" => "easy-message-id", "type" => "next", "data" => "foo"}
       state = %{listeners: %{}, queries: %{"easy-message-id" => {self(), :tag}, "other-message-id" => 501}}
 
-      assert({:noreply, ^state} = Client.handle_info({:gun_ws, caller_pid, "stream-ref", {:text, Jason.encode!(message)}}, state))
+      assert({:noreply, ^state} = Client.handle_info({:gun_ws, caller_pid, "stream-ref", {:text, Util.json_library().encode!(message)}}, state))
 
       assert_received({:tag, {:ok, ^message}})
     end
@@ -119,7 +119,7 @@ defmodule Absinthe.GraphqlWS.ClientTest do
         queries: %{"easy-message-id" => {self(), :tag}, "other-message-id" => 501}
       }
 
-      assert({:noreply, ^state} = Client.handle_info({:gun_ws, caller_pid, "stream-ref", {:text, Jason.encode!(message)}}, state))
+      assert({:noreply, ^state} = Client.handle_info({:gun_ws, caller_pid, "stream-ref", {:text, Util.json_library().encode!(message)}}, state))
 
       assert_received({:subscription, "easy-message-id", "foo"})
     end
@@ -130,7 +130,7 @@ defmodule Absinthe.GraphqlWS.ClientTest do
 
       assert(
         {:noreply, %{queries: %{"other-message-id" => 501}, listeners: %{}}} =
-          Client.handle_info({:gun_ws, caller_pid, "stream-ref", {:text, Jason.encode!(message)}}, state)
+          Client.handle_info({:gun_ws, caller_pid, "stream-ref", {:text, Util.json_library().encode!(message)}}, state)
       )
 
       assert_received({:tag, {:ok, ^message}})
