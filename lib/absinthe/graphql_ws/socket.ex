@@ -87,6 +87,12 @@ defmodule Absinthe.GraphqlWS.Socket do
   A websocket frame to send to the client.
   """
   @type frame() :: {opcode(), message()}
+
+  @typedoc """
+  Describes the data to send in connection close frame.
+  """
+  @type close_detail() :: integer() | {integer(), iodata() | nil}
+
   @typedoc """
   Used internally by `Absinthe.GraphqlWS.Transport.handle_in/2`.
 
@@ -115,11 +121,13 @@ defmodule Absinthe.GraphqlWS.Socket do
   * `{:ok, socket}` - save new socket state, without sending any data to the client.
   * `{:push, {:text, Message.Next.new(id, %{})}, socket}` - save new socket state, and send data to the client.
   * `{:stop, :reason, socket}` - stop the socket.
+  * `{:stop, :reason, close_detail(), socket}` - close the socket and send a close detail to the client.
   """
   @type reply_message() ::
           {:ok, socket()}
           | {:push, frame(), socket()}
           | {:stop, term(), socket()}
+          | {:stop, term(), close_detail(), socket()}
 
   @typedoc """
   Return values from `c:handle_init/2`.
