@@ -165,8 +165,19 @@ defmodule Absinthe.GraphqlWS.Transport do
     end
   end
 
-  def handle_inbound(%{"type" => "ping"}, socket),
-    do: {:reply, :ok, {:text, Message.Pong.new()}, socket}
+  def handle_inbound(%{"type" => "ping"} = message, socket) do
+    payload = Map.get(message, "payload", %{})
+
+    socket =
+      if function_exported?(socket.handler, :handle_ping, 2) do
+        {:ok, socket} = socket.handler.handle_ping(payload, socket)
+        socket
+      else
+        socket
+      end
+
+    {:reply, :ok, {:text, Message.Pong.new(payload)}, socket}
+  end
 
   def handle_inbound(msg, socket) do
     warn("unhandled message #{inspect(msg)}")
