@@ -126,7 +126,9 @@ defmodule Absinthe.GraphqlWS.Socket do
   """
   @type init() ::
           {:ok, map(), socket()}
+          | {:error, {String.t(), map()}, socket()}
           | {:error, map(), socket()}
+          | {:close, {number(), String.t()}, socket()}
           | {:stop, term(), socket()}
 
   @doc """
