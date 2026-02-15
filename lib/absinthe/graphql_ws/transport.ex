@@ -23,8 +23,11 @@ defmodule Absinthe.GraphqlWS.Transport do
   @type reply_message() :: Socket.reply_message()
   @type socket() :: Socket.t()
 
-  defmacrop debug(msg), do: quote(do: Logger.debug("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
-  defmacrop warn(msg), do: quote(do: Logger.warn("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
+  defmacrop debug(msg),
+    do: quote(do: Logger.debug("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
+
+  defmacrop warn(msg),
+    do: quote(do: Logger.warn("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
 
   @doc """
   Generally this will only receive `:pong` messages in response to our keepalive
@@ -86,6 +89,19 @@ defmodule Absinthe.GraphqlWS.Transport do
   def handle_info(%Broadcast{event: "subscription:data", payload: payload, topic: topic}, socket) do
     subscription_id = socket.subscriptions[topic]
     {:push, {:text, Message.Next.new(subscription_id, payload.result)}, socket}
+  end
+
+  def handle_info({:subscribed, context, topic, id}, socket) do
+    socket = merge_opts(socket, context: context)
+    {:ok, %{socket | subscriptions: Map.put(socket.subscriptions, topic, id)}}
+  end
+
+  def handle_info({:reply, context, id, reply}, socket) do
+    queue_complete_message(id)
+
+    socket = merge_opts(socket, context: context)
+
+    {:push, {:text, Message.Next.new(id, reply)}, socket}
   end
 
   def handle_info({:complete, id}, socket) do
@@ -191,7 +207,13 @@ defmodule Absinthe.GraphqlWS.Transport do
         opts
       })
 
-      run_doc(socket, id, query, socket.absinthe, opts)
+      self = self()
+
+      Task.start(fn ->
+        run_doc(socket, id, query, socket.absinthe, self, opts)
+      end)
+
+      {:ok, socket}
     else
       _ ->
         {:ok, socket}
@@ -213,7 +235,9 @@ defmodule Absinthe.GraphqlWS.Transport do
     |> Absinthe.Pipeline.for_document(options)
   end
 
-  defp run_doc(socket, id, query, config, opts) do
+  defp run_doc(socket, id, query, config, self, opts) do
+    IO.puts("starting")
+
     case run(query, config[:schema], config[:pipeline], opts) do
       {:ok, %{"subscribed" => topic}, context} ->
         debug("subscribed to topic #{topic}")
@@ -226,13 +250,10 @@ defmodule Absinthe.GraphqlWS.Transport do
             link: true
           )
 
-        socket = merge_opts(socket, context: context)
-        {:ok, %{socket | subscriptions: Map.put(socket.subscriptions, topic, id)}}
+        send(self, {:subscribed, context, topic, id})
 
       {:ok, %{data: _} = reply, context} ->
-        queue_complete_message(id)
-        socket = merge_opts(socket, context: context)
-        {:reply, :ok, {:text, Message.Next.new(id, reply)}, socket}
+        send(self, {:reply, context, id, reply})
 
       {:ok, %{errors: errors}, context} ->
         socket = merge_opts(socket, context: context)
