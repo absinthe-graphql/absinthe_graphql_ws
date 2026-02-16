@@ -158,7 +158,7 @@ defmodule Absinthe.GraphqlWS.Transport do
         Phoenix.PubSub.unsubscribe(socket.pubsub, topic)
         Absinthe.Subscription.unsubscribe(socket.endpoint, topic)
 
-        {:ok, %{socket | subscriptions: Map.delete(socket.subscriptions, id)}}
+        {:ok, %{socket | subscriptions: Map.delete(socket.subscriptions, topic)}}
 
       _ ->
         {:ok, socket}
