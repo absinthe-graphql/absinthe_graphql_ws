@@ -10,11 +10,8 @@ defmodule Absinthe.GraphqlWS.SocketTest do
   def send_connection_init(%{client: client}) do
     :ok = Test.Client.push(client, %{type: "connection_init"})
 
-    assert {:ok,
-            [
-              {:text, Jason.encode!(%{"type" => "connection_ack", "payload" => %{}})}
-            ]} ==
-             Test.Client.get_new_replies(client)
+    assert {:ok, [{:text, json}]} = Test.Client.get_new_replies(client)
+    assert Jason.decode!(json) == %{"type" => "connection_ack", "payload" => %{}}
 
     :ok
   end
@@ -33,7 +30,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
 
   defp assert_json_received(client, payload) do
     assert {:ok, [{:text, json}]} = Test.Client.get_new_replies(client)
-    assert json == Jason.encode!(payload)
+    assert Jason.decode!(json) == payload
   end
 
   describe "initialization" do

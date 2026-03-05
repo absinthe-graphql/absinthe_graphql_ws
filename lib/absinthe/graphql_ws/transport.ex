@@ -24,7 +24,7 @@ defmodule Absinthe.GraphqlWS.Transport do
   @type socket() :: Socket.t()
 
   defmacrop debug(msg), do: quote(do: Logger.debug("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
-  defmacrop warn(msg), do: quote(do: Logger.warn("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
+  defmacrop warning(msg), do: quote(do: Logger.warning("[graph-socket@#{inspect(self())}] #{unquote(msg)}"))
 
   @doc """
   Generally this will only receive `:pong` messages in response to our keepalive
@@ -37,7 +37,7 @@ defmodule Absinthe.GraphqlWS.Transport do
   def handle_control({_, opcode: :pong}, socket), do: {:ok, socket}
 
   def handle_control(message, state) do
-    warn(" unhandled control frame #{inspect(message)}")
+    warning("unhandled control frame #{inspect(message)}")
     {:ok, state}
   end
 
@@ -53,7 +53,7 @@ defmodule Absinthe.GraphqlWS.Transport do
         handle_inbound(json, socket)
 
       {:error, reason} ->
-        warn("JSON parse error: #{inspect(reason)}")
+        warning("JSON parse error: #{inspect(reason)}")
         {:reply, :error, {:text, Message.Error.new("4400")}, socket}
     end
   end
@@ -169,7 +169,7 @@ defmodule Absinthe.GraphqlWS.Transport do
     do: {:reply, :ok, {:text, Message.Pong.new()}, socket}
 
   def handle_inbound(msg, socket) do
-    warn("unhandled message #{inspect(msg)}")
+    warning("unhandled message #{inspect(msg)}")
     close(4400, "Unhandled message from client", socket)
   end
 

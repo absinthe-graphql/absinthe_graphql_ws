@@ -117,7 +117,7 @@ defmodule Test.Site do
 
     defp pubsub_name,
       do:
-        Application.get_env(:absinthe_graphql_ws, Test.Site.Endpoint)
+        Elixir.Application.get_env(:absinthe_graphql_ws, Test.Site.Endpoint)
         |> Keyword.fetch!(:pubsub_server)
   end
 

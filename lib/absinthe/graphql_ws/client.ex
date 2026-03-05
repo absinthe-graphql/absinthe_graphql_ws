@@ -71,7 +71,7 @@ defmodule Absinthe.GraphqlWS.Client do
   def handle_call({:subscribe, gql, variables, handler}, _from, %{listeners: listeners} = state) do
     id = Uuid.generate()
 
-    state.transport.ws_send(state.gun, {:text, Jason.encode!(make_message(id, gql, variables))})
+    state.transport.ws_send(state.gun, state.gun_stream_ref, {:text, Jason.encode!(make_message(id, gql, variables))})
     listeners = Map.put(listeners, id, handler)
     state = Map.put(state, :listeners, listeners)
     {:reply, {:ok, id}, state}
@@ -168,7 +168,7 @@ defmodule Absinthe.GraphqlWS.Client do
 
   defp send_and_cache(id, from, message, %{queries: queries} = state) do
     # IO.inspect(message, label: "OUTBOUND")
-    state.transport.ws_send(state.gun, {:text, Jason.encode!(message)})
+    state.transport.ws_send(state.gun, state.gun_stream_ref, {:text, Jason.encode!(message)})
     queries = Map.put(queries, id, from)
     state = Map.put(state, :queries, queries)
     {:noreply, state}
@@ -198,5 +198,5 @@ defmodule Absinthe.GraphqlWS.Client do
   end
 
   # defp debug(msg), do: Logger.debug("[client@#{inspect(self())}] #{msg}")
-  defp warn(msg), do: Logger.warn("[client@#{inspect(self())}] #{msg}")
+  defp warn(msg), do: Logger.warning("[client@#{inspect(self())}] #{msg}")
 end

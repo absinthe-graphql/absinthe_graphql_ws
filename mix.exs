@@ -9,12 +9,11 @@ defmodule AbsintheGraphqlWS.MixProject do
       description: "Add graphql-ws websocket transport for Absinthe",
       dialyzer: dialyzer(),
       docs: docs(),
-      elixir: "~> 1.12",
+      elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       homepage_url: "https://github.com/geometerio/absinthe_graphql_ws",
       name: "AbsintheGrahqlWS",
       package: package(),
-      preferred_cli_env: [credo: :test, dialyzer: :test],
       source_url: "https://github.com/geometerio/absinthe_graphql_ws",
       start_permanent: Mix.env() == :prod,
       version: @version
@@ -27,22 +26,26 @@ defmodule AbsintheGraphqlWS.MixProject do
     ]
   end
 
+  def cli do
+    [preferred_envs: [credo: :test, dialyzer: :test]]
+  end
+
   defp deps do
     [
       {:absinthe, "~> 1.6"},
       {:absinthe_phoenix, "> 0.0.0"},
       {:benchee, "> 0.0.0", only: [:bench]},
-      {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:cowlib, "~> 2.8", only: :test, override: true},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:cowlib, "~> 2.12", only: :test, override: true},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
       {:eljiffy, "> 0.0.0", only: [:bench]},
       {:ex_doc, "~> 0.24", only: :dev, runtime: false},
-      {:gun, "~> 1.3", only: [:test]},
+      {:gun, "~> 2.0", only: [:test]},
       {:jason, "~> 1.2", optional: true},
       {:markdown_formatter, "~> 0.5"},
       {:mix_audit, "~> 1.0", only: [:dev, :test], runtime: false},
       {:phoenix, "~> 1.5"},
-      {:plug_cowboy, "~> 2.5", only: :test, override: true}
+      {:plug_cowboy, "~> 2.7", only: :test, override: true}
     ]
   end
 

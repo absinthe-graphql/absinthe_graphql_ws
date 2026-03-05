@@ -59,7 +59,7 @@ defmodule Test.Client do
   end
 
   def handle_call({:push, %{} = message}, _from, state) do
-    :gun.ws_send(state.gun, {:text, Jason.encode!(message)})
+    :gun.ws_send(state.gun, state.gun_stream_ref, {:text, Jason.encode!(message)})
     {:reply, :ok, state}
   end
 
@@ -129,5 +129,5 @@ defmodule Test.Client do
   end
 
   defp debug(msg), do: Logger.debug("[client@#{inspect(self())}] #{msg}")
-  defp warn(msg), do: Logger.warn("[client@#{inspect(self())}] #{msg}")
+  defp warn(msg), do: Logger.warning("[client@#{inspect(self())}] #{msg}")
 end
