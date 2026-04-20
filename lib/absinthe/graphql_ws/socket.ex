@@ -187,22 +187,13 @@ defmodule Absinthe.GraphqlWS.Socket do
 
   @optional_callbacks handle_message: 2, handle_init: 2
 
-  @spec __after_compile__(any(), any()) :: :ok
-  def __after_compile__(env, _bytecode) do
-    opts = Module.get_attribute(env.module, :graphql_ws_socket_opts)
-
-    unless Keyword.has_key?(opts, :schema) do
-      :elixir_errors.erl_warn(env.line, env.file, "#{env.module} must specify `:schema` when using Absinthe.GraphqlWS.Socket")
+  defmacro __using__(opts) do
+    if !Keyword.has_key?(opts, :schema) do
+      raise "missing required `:schema` option"
     end
 
-    :ok
-  end
-
-  defmacro __using__(opts) do
     quote do
-      @graphql_ws_socket_opts unquote(opts)
-      @after_compile Absinthe.GraphqlWS.Socket
-
+      @opts unquote(opts)
       import Absinthe.GraphqlWS.Util
       alias Absinthe.GraphqlWS.Socket
 
@@ -211,14 +202,14 @@ defmodule Absinthe.GraphqlWS.Socket do
 
       @doc false
       @impl Phoenix.Socket.Transport
-      def child_spec(opts) do
-        Socket.__child_spec__(__MODULE__, opts, @graphql_ws_socket_opts)
+      def child_spec(spec_opts) do
+        Socket.__child_spec__(__MODULE__, spec_opts, @opts)
       end
 
       @doc false
       @impl Phoenix.Socket.Transport
       def connect(transport) do
-        Socket.__connect__(__MODULE__, transport, @graphql_ws_socket_opts)
+        Socket.__connect__(__MODULE__, transport, @opts)
       end
 
       @doc false
