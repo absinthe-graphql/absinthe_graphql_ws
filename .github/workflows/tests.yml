@@ -160,6 +160,9 @@ jobs:
       - name: Audit deps
         run: mix deps.audit
         working-directory: .
+      - name: Security scan (Sobelow)
+        run: mix sobelow --conf
+        working-directory: .
   publish:
     name: Publish to Hex
     if: github.ref == 'refs/heads/main'
