@@ -42,7 +42,8 @@ defmodule AbsintheGraphqlWS.MixProject do
       {:markdown_formatter, "~> 0.5"},
       {:mix_audit, "~> 1.0", only: [:dev, :test], runtime: false},
       {:phoenix, "~> 1.5"},
-      {:plug_cowboy, "~> 2.5", only: :test, override: true}
+      {:plug_cowboy, "~> 2.5", only: :test, override: true},
+      {:sobelow, ">= 0.14.0", only: [:dev, :test], runtime: false}
     ]
   end
 
