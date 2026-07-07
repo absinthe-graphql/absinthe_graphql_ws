@@ -10,11 +10,10 @@ defmodule Absinthe.GraphqlWS.SocketTest do
   def send_connection_init(%{client: client}) do
     :ok = Test.Client.push(client, %{type: "connection_init"})
 
-    assert {:ok,
-            [
-              {:text, Jason.encode!(%{"type" => "connection_ack", "payload" => %{}})}
-            ]} ==
-             Test.Client.get_new_replies(client)
+    assert_json_received(client, %{
+      "payload" => %{},
+      "type" => "connection_ack"
+    })
 
     :ok
   end
@@ -33,7 +32,7 @@ defmodule Absinthe.GraphqlWS.SocketTest do
 
   defp assert_json_received(client, payload) do
     assert {:ok, [{:text, json}]} = Test.Client.get_new_replies(client)
-    assert json == Jason.encode!(payload)
+    assert Jason.decode!(json) == payload
   end
 
   describe "initialization" do
@@ -320,5 +319,59 @@ defmodule Absinthe.GraphqlWS.SocketTest do
       assert_receive({:subscription, %{}} = reply)
       assert reply == {:subscription, %{subscription_param: "boo"}}
     end
+  end
+
+  describe "max_heap_size" do
+    @telemetry_handler_id {__MODULE__, :max_heap_size_set}
+
+    test "sets the socket process max heap size from bytes" do
+      parent = self()
+
+      :ok =
+        :telemetry.attach(
+          @telemetry_handler_id,
+          [:absinthe_graphql_ws, :socket, :max_heap_size, :set],
+          fn event, measurements, metadata, _config ->
+            send(parent, {:telemetry, event, measurements, metadata})
+          end,
+          nil
+        )
+
+      on_exit(fn -> :telemetry.detach(@telemetry_handler_id) end)
+      Test.Site.TestPubSub.subscribe(:max_heap_size)
+
+      assert {:ok, client} = Test.Client.start(Test.Site.heap_guard_socket())
+      on_exit(fn -> Test.Client.close(client) end)
+
+      max_heap_size_bytes = Test.Site.heap_guard_max_heap_size_bytes()
+      max_heap_size_words = bytes_to_words(max_heap_size_bytes)
+
+      assert_receive {
+        :telemetry,
+        [:absinthe_graphql_ws, :socket, :max_heap_size, :set],
+        %{
+          max_heap_size_bytes: ^max_heap_size_bytes,
+          max_heap_size_words: ^max_heap_size_words
+        },
+        %{handler: Test.Site.HeapGuardSocket}
+      }
+
+      :ok = Test.Client.push(client, %{type: "connection_init"})
+
+      assert_receive {
+        :max_heap_size,
+        %{size: ^max_heap_size_words, kill: true, error_logger: true}
+      }
+
+      assert_json_received(client, %{
+        "payload" => %{},
+        "type" => "connection_ack"
+      })
+    end
+  end
+
+  defp bytes_to_words(bytes) do
+    word_size = :erlang.system_info(:wordsize)
+    div(bytes + word_size - 1, word_size)
   end
 end

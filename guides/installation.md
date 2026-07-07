@@ -33,6 +33,22 @@ defmodule MyAppWeb.GraphqlWSSocket do
 end
 ```
 
+Socket options can be passed to `use Absinthe.GraphqlWS.Socket`. For example, to cap each websocket
+process heap at 50 MB:
+
+```elixir
+defmodule MyAppWeb.GraphqlWSSocket do
+  use Absinthe.GraphqlWS.Socket,
+    schema: MyAppWeb.Schema,
+    max_heap_size: 50 * 1024 * 1024
+end
+```
+
+`max_heap_size` is configured in bytes. The library converts it to BEAM words and applies
+`Process.flag(:max_heap_size, %{size: words, kill: true, error_logger: true})` inside each websocket
+process. Applications that need metrics for heap-limit kills should consume the OTP Logger report
+emitted by `error_logger: true` through their normal log pipeline.
+
 ## Phoenix endpoint
 
 Now mount the socket in your Phoenix.Endpoint:

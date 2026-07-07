@@ -8,6 +8,10 @@ defmodule Absinthe.GraphqlWS.Socket do
   * `schema` - required - The Absinthe schema for the current application (example: `MyAppWeb.Schema`)
   * `keepalive` - optional - Interval in milliseconds to send `:ping` control frames over the websocket.
     Defaults to `30_000` (30 seconds).
+  * `max_heap_size` - optional - Maximum heap size in bytes for each websocket process.
+    When set to a positive integer, the value is converted to BEAM words and applied with
+    `Process.flag(:max_heap_size, %{size: words, kill: true, error_logger: true})`.
+    Heap-limit kills are reported by OTP Logger.
   * `pipeline` - optional - A `{module, function}` tuple defining how to generate an Absinthe pipeline
     for each incoming message. Defaults to `{Absinthe.GraphqlWS.Socket, :absinthe_pipeline}`.
 
@@ -43,6 +47,7 @@ defmodule Absinthe.GraphqlWS.Socket do
     :endpoint,
     :handler,
     :keepalive,
+    :max_heap_size,
     :pubsub,
     assigns: %{},
     initialized?: false,
@@ -59,6 +64,7 @@ defmodule Absinthe.GraphqlWS.Socket do
           endpoint: module(),
           initialized?: boolean(),
           keepalive: integer(),
+          max_heap_size: pos_integer() | nil,
           subscriptions: map()
         }
   @type socket() :: t()
@@ -224,6 +230,8 @@ defmodule Absinthe.GraphqlWS.Socket do
       @doc false
       @impl Phoenix.Socket.Transport
       def init(socket) do
+        Socket.__apply_max_heap_size__(socket)
+
         if socket.keepalive > 0,
           do: Process.send_after(self(), :keepalive, socket.keepalive)
 
@@ -276,6 +284,7 @@ defmodule Absinthe.GraphqlWS.Socket do
     pubsub = socket.endpoint.config(:pubsub_server)
     schema = Keyword.fetch!(options, :schema)
     keepalive = Keyword.get(options, :keepalive, @default_keepalive)
+    max_heap_size = Keyword.get(options, :max_heap_size)
 
     absinthe_config = %{
       opts: [
@@ -294,12 +303,64 @@ defmodule Absinthe.GraphqlWS.Socket do
         endpoint: socket.endpoint,
         handler: module,
         keepalive: keepalive,
+        max_heap_size: max_heap_size,
         pubsub: pubsub
       )
 
     debug("connect: #{socket}")
 
     {:ok, socket}
+  end
+
+  @doc """
+  Applies the configured websocket process heap limit to the current process.
+
+  This helper is called by generated socket modules during `c:Phoenix.Socket.Transport.init/1`.
+  Positive integer `:max_heap_size` values are interpreted as bytes, rounded up to BEAM words,
+  and applied with `Process.flag(:max_heap_size, %{kill: true, error_logger: true})`.
+
+  When a limit is applied, the function emits
+  `[:absinthe_graphql_ws, :socket, :max_heap_size, :set]` with byte and word measurements.
+  `nil` and non-positive integer values leave the process unchanged.
+  """
+  @spec __apply_max_heap_size__(socket()) :: :ok
+  def __apply_max_heap_size__(%Socket{max_heap_size: max_heap_size})
+      when max_heap_size in [nil, 0] do
+    :ok
+  end
+
+  def __apply_max_heap_size__(%Socket{max_heap_size: max_heap_size})
+      when is_integer(max_heap_size) and max_heap_size < 0 do
+    :ok
+  end
+
+  def __apply_max_heap_size__(%Socket{max_heap_size: max_heap_size, handler: handler})
+      when is_integer(max_heap_size) do
+    max_heap_size_words = bytes_to_words(max_heap_size)
+
+    Process.flag(:max_heap_size, %{
+      size: max_heap_size_words,
+      kill: true,
+      error_logger: true
+    })
+
+    :telemetry.execute(
+      [:absinthe_graphql_ws, :socket, :max_heap_size, :set],
+      %{max_heap_size_bytes: max_heap_size, max_heap_size_words: max_heap_size_words},
+      %{handler: handler}
+    )
+
+    :ok
+  end
+
+  def __apply_max_heap_size__(%Socket{max_heap_size: max_heap_size}) do
+    raise ArgumentError,
+          ":max_heap_size must be a positive integer byte count, got: #{inspect(max_heap_size)}"
+  end
+
+  defp bytes_to_words(bytes) do
+    word_size = :erlang.system_info(:wordsize)
+    div(bytes + word_size - 1, word_size)
   end
 
   @doc """

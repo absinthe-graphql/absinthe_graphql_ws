@@ -12,8 +12,8 @@ defmodule Test.Client do
     reply_buffer: []
   ]
 
-  def start, do: GenServer.start(__MODULE__, [])
-  def start_link, do: GenServer.start_link(__MODULE__, [])
+  def start(path \\ nil), do: GenServer.start(__MODULE__, path)
+  def start_link(path \\ nil), do: GenServer.start_link(__MODULE__, path)
 
   def close(pid) do
     :ok = GenServer.call(pid, :close)
@@ -25,10 +25,10 @@ defmodule Test.Client do
   def get_new_replies(pid), do: GenServer.call(pid, :get_new_replies, 5000)
   def push(pid, message), do: GenServer.call(pid, {:push, message})
 
-  def init(_args) do
+  def init(path) do
     host = to_charlist(Test.Site.host())
     port = Test.Site.port()
-    path = Test.Site.Endpoint.socket()
+    path = path || Test.Site.Endpoint.socket()
 
     with {:ok, gun_pid} <- :gun.open(host, port, %{retry: 0}),
          {:ok, _protocol} <- :gun.await_up(gun_pid, :timer.seconds(5)),

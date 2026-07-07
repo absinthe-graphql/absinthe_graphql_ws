@@ -3,8 +3,12 @@ defmodule Test.Site do
 
   @host "localhost"
   @port 29_876
+  @heap_guard_socket "/graphql_heap_guard"
+  @heap_guard_max_heap_size_bytes 1_048_576
   def host, do: @host
   def port, do: @port
+  def heap_guard_socket, do: @heap_guard_socket
+  def heap_guard_max_heap_size_bytes, do: @heap_guard_max_heap_size_bytes
 
   defmodule GraphSocket do
     use Absinthe.GraphqlWS.Socket, schema: Test.Site.Schema
@@ -13,6 +17,20 @@ defmodule Test.Site do
     def handle_message({:subscription, params}, socket) do
       Test.Site.TestPubSub.notify(:handle_message_callback, {:subscription, params})
       {:ok, socket}
+    end
+  end
+
+  defmodule HeapGuardSocket do
+    use Absinthe.GraphqlWS.Socket,
+      schema: Test.Site.Schema,
+      max_heap_size: 1_048_576
+
+    @impl Absinthe.GraphqlWS.Socket
+    def handle_init(_payload, socket) do
+      {:max_heap_size, max_heap_size} = Process.info(self(), :max_heap_size)
+      Test.Site.TestPubSub.notify(:max_heap_size, {:max_heap_size, max_heap_size})
+
+      {:ok, %{}, socket}
     end
   end
 
@@ -117,7 +135,7 @@ defmodule Test.Site do
 
     defp pubsub_name,
       do:
-        Application.get_env(:absinthe_graphql_ws, Test.Site.Endpoint)
+        Elixir.Application.get_env(:absinthe_graphql_ws, Test.Site.Endpoint)
         |> Keyword.fetch!(:pubsub_server)
   end
 
@@ -174,10 +192,19 @@ defmodule Test.Site do
     use Absinthe.Phoenix.Endpoint
 
     @socket "/graphql"
+    @heap_guard_socket "/graphql_heap_guard"
     def socket, do: @socket
 
     socket @socket,
            Test.Site.GraphSocket,
+           websocket: [
+             connect_info: [:peer_data, :trace_context_headers, :x_headers, :uri, :user_agent],
+             path: "",
+             subprotocols: ["graphql-transport-ws"]
+           ]
+
+    socket @heap_guard_socket,
+           Test.Site.HeapGuardSocket,
            websocket: [
              connect_info: [:peer_data, :trace_context_headers, :x_headers, :uri, :user_agent],
              path: "",
