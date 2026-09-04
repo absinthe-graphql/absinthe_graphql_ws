@@ -3,8 +3,10 @@ defmodule Test.Site do
 
   @host "localhost"
   @port 29_876
+  @reject_socket "/graphql_reject"
   def host, do: @host
   def port, do: @port
+  def reject_socket, do: @reject_socket
 
   defmodule GraphSocket do
     use Absinthe.GraphqlWS.Socket, schema: Test.Site.Schema
@@ -13,6 +15,15 @@ defmodule Test.Site do
     def handle_message({:subscription, params}, socket) do
       Test.Site.TestPubSub.notify(:handle_message_callback, {:subscription, params})
       {:ok, socket}
+    end
+  end
+
+  defmodule RejectSocket do
+    use Absinthe.GraphqlWS.Socket, schema: Test.Site.Schema
+
+    @impl Absinthe.GraphqlWS.Socket
+    def handle_init(_payload, socket) do
+      {:close, {4403, "Forbidden"}, socket}
     end
   end
 
@@ -178,6 +189,14 @@ defmodule Test.Site do
 
     socket @socket,
            Test.Site.GraphSocket,
+           websocket: [
+             connect_info: [:peer_data, :trace_context_headers, :x_headers, :uri, :user_agent],
+             path: "",
+             subprotocols: ["graphql-transport-ws"]
+           ]
+
+    socket "/graphql_reject",
+           Test.Site.RejectSocket,
            websocket: [
              connect_info: [:peer_data, :trace_context_headers, :x_headers, :uri, :user_agent],
              path: "",

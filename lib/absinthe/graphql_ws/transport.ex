@@ -128,6 +128,9 @@ defmodule Absinthe.GraphqlWS.Transport do
 
         {:error, payload, socket} ->
           {:reply, :ok, {:text, Message.Error.new(payload)}, socket}
+
+        {:close, {code, message}, socket} when is_integer(code) and is_binary(message) ->
+          close(code, message, socket)
       end
     else
       {:reply, :ok, {:text, Message.ConnectionAck.new()}, %{socket | initialized?: true}}

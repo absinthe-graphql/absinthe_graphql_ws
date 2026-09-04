@@ -123,10 +123,19 @@ defmodule Absinthe.GraphqlWS.Socket do
 
   @typedoc """
   Return values from `c:handle_init/2`.
+
+  ## Values
+
+  * `{:ok, payload, socket}` - accept the connection and reply with `connection_ack`.
+  * `{:error, payload, socket}` - reply with an `error` message; the websocket stays open
+    but uninitialized.
+  * `{:close, {code, message}, socket}` - reject the connection by closing the websocket with
+    the given close `code` and `message` (e.g. `4403` / `"Forbidden"` per `graphql-ws`).
   """
   @type init() ::
           {:ok, map(), socket()}
           | {:error, map(), socket()}
+          | {:close, {code :: integer(), message :: String.t()}, socket()}
           | {:stop, term(), socket()}
 
   @doc """
@@ -175,7 +184,7 @@ defmodule Absinthe.GraphqlWS.Socket do
         def handle_init(%{"user_id" => user_id}, socket) do
           case find_user(user_id) do
             nil ->
-              {:error, %{}, socket}
+              {:close, {4403, "Forbidden"}, socket}
             user ->
               socket = assign_context(socket, current_user: user)
               {:ok, %{name: user.name}, socket}

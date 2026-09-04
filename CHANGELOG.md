@@ -2,6 +2,9 @@
 
 ## Unpublished
 
+- `c:Absinthe.GraphqlWS.Socket.handle_init/2` may return `{:close, {code, message}, socket}` to reject
+  a connection by closing the websocket with a `graphql-ws` close code (e.g. `4403`).
+
 ## 0.3.6
 
 - Update development dependencies
