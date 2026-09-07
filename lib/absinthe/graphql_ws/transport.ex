@@ -18,6 +18,16 @@ defmodule Absinthe.GraphqlWS.Transport do
   @ping "ping"
   @pong "pong"
 
+  # Close codes a server may send per RFC 6455 §7.4: 1000-1003 and 1007-1011 are
+  # protocol-defined, 3000-3999 are registered, 4000-4999 are application-private.
+  # 1004-1006 and 1012-2999 are reserved / must not be sent.
+  defguardp is_close_code(code)
+            when is_integer(code) and
+                   (code in 1000..1003 or code in 1007..1011 or code in 3000..4999)
+
+  # RFC 6455 §5.5: control frame payload <= 125 bytes, 2 of which are the code.
+  defguardp is_close_reason(reason) when is_binary(reason) and byte_size(reason) <= 123
+
   @type control :: Socket.control()
   @type reply_inbound() :: Socket.reply_inbound()
   @type reply_message() :: Socket.reply_message()
@@ -128,6 +138,15 @@ defmodule Absinthe.GraphqlWS.Transport do
 
         {:error, payload, socket} ->
           {:reply, :ok, {:text, Message.Error.new(payload)}, socket}
+
+        {:close, {code, message}, socket} when is_close_code(code) and is_close_reason(message) ->
+          # cowlib only checks the frame length and truncates the code to 16 bits,
+          # so validate here and fail loudly (String.valid?/1 is not guard-safe).
+          unless String.valid?(message) do
+            raise ArgumentError, "handle_init/2 close reason must be valid UTF-8, got: #{inspect(message)}"
+          end
+
+          close(code, message, socket)
       end
     else
       {:reply, :ok, {:text, Message.ConnectionAck.new()}, %{socket | initialized?: true}}

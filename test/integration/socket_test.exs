@@ -66,6 +66,16 @@ defmodule Absinthe.GraphqlWS.SocketTest do
     end
   end
 
+  describe "on ConnectionInit rejected by handle_init/2" do
+    test "closes the socket with the handler's close code and message" do
+      assert {:ok, client} = Test.Client.start(Test.Site.reject_socket())
+      on_exit(fn -> Test.Client.close(client) end)
+
+      :ok = Test.Client.push(client, %{type: "connection_init"})
+      assert_socket_closed(client, 4403, "Forbidden")
+    end
+  end
+
   describe "on Ping" do
     setup [:setup_client, :send_connection_init]
 
